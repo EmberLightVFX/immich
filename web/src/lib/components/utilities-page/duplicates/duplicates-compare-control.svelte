@@ -5,6 +5,7 @@
   import DuplicateAsset from '$lib/components/utilities-page/duplicates/duplicate-asset.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import { handlePromiseError } from '$lib/utils';
+  import { getAssetRatio } from '$lib/utils/asset-utils';
   import { suggestDuplicate } from '$lib/utils/duplicate-utils';
   import { navigate } from '$lib/utils/navigation';
   import { type AssetResponseDto } from '@immich/sdk';
@@ -96,6 +97,44 @@
   const handleStack = () => {
     onStack(assets);
   };
+
+  // Svelte Runes mode: use $derived and always use $ for dependencies
+  const maxResolution = $derived(
+    Math.max(
+      ...assets.map((asset) => {
+        const { width, height } = getAssetRatio(asset);
+        return width * height;
+      }),
+    ),
+  );
+
+  const maxSize = $derived(Math.max(...assets.map((asset) => asset.exifInfo?.fileSizeInByte || 0)));
+
+  const anyFavorite = $derived(assets.some((asset) => asset.isFavorite));
+
+  const bestResolutionIds = $derived(
+    new Set(
+      assets
+        .filter((asset) => {
+          const { width, height } = getAssetRatio(asset);
+          return width * height === maxResolution;
+        })
+        .map((asset) => asset.id),
+    ),
+  );
+  const bestSizeIds = $derived(
+    new Set(assets.filter((asset) => (asset.exifInfo?.fileSizeInByte || 0) === maxSize).map((asset) => asset.id)),
+  );
+
+  const favoriteIds = $derived(new Set(assets.filter((asset) => asset.isFavorite).map((asset) => asset.id)));
+
+  const minCreatedAt = $derived(Math.min(...assets.map((asset) => new Date(asset.fileCreatedAt).getTime())));
+
+  const oldestIds = $derived(
+    new Set(
+      assets.filter((asset) => new Date(asset.fileCreatedAt).getTime() === minCreatedAt).map((asset) => asset.id),
+    ),
+  );
 </script>
 
 <svelte:document
@@ -113,7 +152,7 @@
   ]}
 />
 
-<div class="pt-4 rounded-3xl border dark:border-2 border-gray-300 dark:border-gray-700 max-w-216 mx-auto mb-16">
+<div class="pt-4 rounded-3xl border dark:border-2 border-gray-300 dark:border-gray-700 max-w-216 mb-16">
   <div class="flex flex-wrap gap-y-6 mb-4 px-6 w-full place-content-end justify-between">
     <!-- MARK ALL BUTTONS -->
     <div class="flex text-xs text-black">
@@ -171,6 +210,10 @@
         {onSelectAsset}
         isSelected={selectedAssetIds.has(asset.id)}
         onViewAsset={(asset) => setAsset(asset)}
+        bestResolution={bestResolutionIds.has(asset.id)}
+        bestSize={bestSizeIds.has(asset.id)}
+        isBestFavorite={anyFavorite && favoriteIds.has(asset.id)}
+        isOldest={oldestIds.has(asset.id)}
       />
     {/each}
   </div>

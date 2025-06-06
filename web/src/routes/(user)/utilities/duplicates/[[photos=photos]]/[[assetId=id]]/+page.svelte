@@ -206,12 +206,16 @@
 
       {#key duplicates[0].duplicateId}
         <DuplicatesCompareControl
-          assets={duplicates[0].assets}
-          onResolve={(duplicateAssetIds, trashIds) =>
-            handleResolve(duplicates[0].duplicateId, duplicateAssetIds, trashIds)}
-          onStack={(assets) => handleStack(duplicates[0].duplicateId, assets)}
-        />
-      {/key}
+        {#if showComparison}
+          {#if duplicates[0].assets.length >= 2}
+            <ImageComparisonSlider
+              leftImage={getAssetOriginalUrl(duplicates[0].assets[0].id)}
+              rightImage={getAssetOriginalUrl(duplicates[0].assets[1].id)}
+              leftAlt={duplicates[0].assets[0].originalFileName}
+              rightAlt={duplicates[0].assets[1].originalFileName}
+            />
+          {/if}
+        {/if}
     {:else}
       <p class="text-center text-lg dark:text-white flex place-items-center place-content-center">
         {$t('no_duplicates_found')}

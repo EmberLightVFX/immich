@@ -13,9 +13,22 @@
     isSelected: boolean;
     onSelectAsset: (asset: AssetResponseDto) => void;
     onViewAsset: (asset: AssetResponseDto) => void;
+    bestResolution?: boolean;
+    bestSize?: boolean;
+    isBestFavorite?: boolean;
+    isOldest?: boolean;
   }
 
-  let { asset, isSelected, onSelectAsset, onViewAsset }: Props = $props();
+  let {
+    asset,
+    isSelected,
+    onSelectAsset,
+    onViewAsset,
+    bestResolution = false,
+    bestSize = false,
+    isBestFavorite = false,
+    isOldest = false,
+  }: Props = $props();
 
   let isFromExternalLibrary = $derived(!!asset.libraryId);
   let assetData = $derived(JSON.stringify(asset, null, 2));
@@ -93,7 +106,18 @@
       : 'dark:text-white'}"
   >
     <span class="break-all text-center">{asset.originalFileName}</span>
-    <span>{getAssetResolution(asset)} - {getFileSize(asset)}</span>
+    <span class={isOldest ? 'text-green-600 font-bold' : 'text-red-600'}>
+      {new Date(asset.fileCreatedAt).toLocaleString()}
+    </span>
+    <span class={bestResolution ? 'text-green-600 font-bold' : 'text-red-600'}>
+      {getAssetResolution(asset)}
+    </span>
+    <span class={bestSize ? 'text-green-600 font-bold' : 'text-red-600'}>
+      {getFileSize(asset)}
+    </span>
+    <span class={isBestFavorite ? 'text-green-600 font-bold' : asset.isFavorite ? 'text-red-600' : ''}>
+      {$t('favorite')}: {asset.isFavorite ? $t('yes') : $t('no')}
+    </span>
     <span>
       {#await getAllAlbums({ assetId: asset.id })}
         {$t('scanning_for_album')}
