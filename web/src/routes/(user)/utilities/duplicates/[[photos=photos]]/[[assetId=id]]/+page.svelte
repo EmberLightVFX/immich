@@ -5,17 +5,19 @@
     notificationController,
   } from '$lib/components/shared-components/notification/notification';
   import DuplicatesCompareControl from '$lib/components/utilities-page/duplicates/duplicates-compare-control.svelte';
+  import ImageComparisonSlider from '$lib/components/utilities-page/duplicates/image-comparison-slider.svelte';
   import { modalManager } from '$lib/managers/modal-manager.svelte';
   import DuplicatesInformationModal from '$lib/modals/DuplicatesInformationModal.svelte';
   import ShortcutsModal from '$lib/modals/ShortcutsModal.svelte';
   import { locale } from '$lib/stores/preferences.store';
   import { featureFlags } from '$lib/stores/server-config.store';
+  import { getAssetOriginalUrl } from '$lib/utils';
   import { stackAssets } from '$lib/utils/asset-utils';
   import { suggestDuplicate } from '$lib/utils/duplicate-utils';
   import { handleError } from '$lib/utils/handle-error';
   import type { AssetResponseDto } from '@immich/sdk';
   import { deleteAssets, updateAssets } from '@immich/sdk';
-  import { Button, HStack, IconButton, Text } from '@immich/ui';
+  import { Button, Field, HStack, IconButton, Switch, Text } from '@immich/ui';
   import { mdiCheckOutline, mdiInformationOutline, mdiKeyboard, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
@@ -47,6 +49,7 @@
     ],
   };
 
+  let showComparison = $state(true);
   let duplicates = $state(data.duplicates);
   let hasDuplicates = $derived(duplicates.length > 0);
   const withConfirmation = async (callback: () => Promise<void>, prompt?: string, confirmText?: string) => {
@@ -155,6 +158,9 @@
 <UserPageLayout title={data.meta.title + ` (${duplicates.length.toLocaleString($locale)})`} scrollbar={true}>
   {#snippet buttons()}
     <HStack gap={0}>
+      <Field label="Show comparison">
+        <Switch id="show-comparison" bind:checked={showComparison} class="text-sm text-start" />
+      </Field>
       <Button
         leadingIcon={mdiTrashCanOutline}
         onclick={() => handleDeduplicateAll()}
@@ -204,8 +210,8 @@
         />
       </div>
 
-      {#key duplicates[0].duplicateId}
-        <DuplicatesCompareControl
+      <!-- Image Comparison Slider: Only show if there are at least 2 assets -->
+      <div class="flex flex-col md:flex-row gap-4 items-start justify-center">
         {#if showComparison}
           {#if duplicates[0].assets.length >= 2}
             <ImageComparisonSlider
@@ -216,6 +222,16 @@
             />
           {/if}
         {/if}
+
+        {#key duplicates[0].duplicateId}
+          <DuplicatesCompareControl
+            assets={duplicates[0].assets}
+            onResolve={(duplicateAssetIds, trashIds) =>
+              handleResolve(duplicates[0].duplicateId, duplicateAssetIds, trashIds)}
+            onStack={(assets) => handleStack(duplicates[0].duplicateId, assets)}
+          />
+        {/key}
+      </div>
     {:else}
       <p class="text-center text-lg dark:text-white flex place-items-center place-content-center">
         {$t('no_duplicates_found')}
