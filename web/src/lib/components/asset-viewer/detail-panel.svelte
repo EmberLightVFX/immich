@@ -6,8 +6,13 @@
   import DetailPanelTags from '$lib/components/asset-viewer/detail-panel-tags.svelte';
   import Icon from '$lib/components/elements/icon.svelte';
   import ChangeDate from '$lib/components/shared-components/change-date.svelte';
+  import {
+    NotificationType,
+    notificationController,
+  } from '$lib/components/shared-components/notification/notification';
   import { AppRoute, QueryParameter, timeToLoadTheMap } from '$lib/constants';
   import { authManager } from '$lib/managers/auth-manager.svelte';
+  import { modalManager } from '$lib/managers/modal-manager.svelte';
   import { isFaceEditMode } from '$lib/stores/face-edit.svelte';
   import { boundingBoxesArray } from '$lib/stores/people.store';
   import { locale } from '$lib/stores/preferences.store';
@@ -21,8 +26,10 @@
   import { fromDateTimeOriginal, fromLocalDateTime } from '$lib/utils/timeline-util';
   import {
     AssetMediaSize,
+    deleteFace,
     getAssetInfo,
     updateAsset,
+    updatePerson,
     type AlbumResponseDto,
     type AssetResponseDto,
     type ExifResponseDto,
@@ -154,6 +161,46 @@
       handleError(error, $t('errors.unable_to_change_date'));
     }
   }
+
+  const deleteAllUnnamedFaces = async () => {
+    try {
+      const peopleWithNoName = people.filter((person) => !person.name || person.name.trim() === '');
+
+      if (peopleWithNoName.length === 0) {
+        return;
+      }
+
+      const isConfirmed = await modalManager.showDialog({
+        prompt: $t('confirm_delete_all_unnamed_faces', { values: { count: peopleWithNoName.length } }),
+        title: $t('delete_all_unnamed_faces'),
+      });
+
+      if (!isConfirmed) {
+        return;
+      }
+
+      // Delete each person with no name
+      for (const person of peopleWithNoName) {
+        for (const face of person.faces) {
+          await deleteFace({ id: face.id, assetFaceDeleteDto: { force: false } });
+        }
+        await updatePerson({
+          id: person.id,
+          personUpdateDto: { isHidden: true },
+        });
+      }
+
+      // Refresh asset data
+      await handleNewAsset(asset);
+
+      notificationController.show({
+        message: $t('all_unnamed_faces_deleted'),
+        type: NotificationType.Info,
+      });
+    } catch (error) {
+      handleError(error, $t('error_delete_all_unnamed_faces'));
+    }
+  };
 </script>
 
 <section class="relative p-2">
@@ -199,6 +246,16 @@
               padding="1"
               buttonSize="32"
               onclick={() => (showingHiddenPeople = !showingHiddenPeople)}
+            />
+          {/if}
+          {#if people.some((person) => !person.name || person.name.trim() === '')}
+            <CircleIconButton
+              title={$t('delete_all_unnamed_faces')}
+              icon={mdiClose}
+              padding="1"
+              size="20"
+              buttonSize="32"
+              onclick={deleteAllUnnamedFaces}
             />
           {/if}
           <CircleIconButton
