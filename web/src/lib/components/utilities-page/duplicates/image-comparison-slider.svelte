@@ -18,18 +18,10 @@
   aria-valuemin="0"
   aria-valuemax="100"
   aria-label="Image comparison slider"
-  onmousedown={(e) => {
+  onmousemove={(e) => {
     const container = e.currentTarget as HTMLElement;
-    function onMove(ev: MouseEvent) {
-      const rect = container.getBoundingClientRect();
-      slider = Math.max(0, Math.min(100, ((ev.clientX - rect.left) / rect.width) * 100));
-    }
-    function onUp() {
-      globalThis.removeEventListener('mousemove', onMove);
-      globalThis.removeEventListener('mouseup', onUp);
-    }
-    globalThis.addEventListener('mousemove', onMove);
-    globalThis.addEventListener('mouseup', onUp);
+    const rect = container.getBoundingClientRect();
+    slider = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
   }}
 >
   <img class="comparison-image" src={rightImage} alt={rightAlt} draggable="false" />
