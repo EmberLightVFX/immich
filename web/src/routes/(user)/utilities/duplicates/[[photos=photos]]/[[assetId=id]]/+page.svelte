@@ -11,7 +11,6 @@
   import ShortcutsModal from '$lib/modals/ShortcutsModal.svelte';
   import { locale } from '$lib/stores/preferences.store';
   import { featureFlags } from '$lib/stores/server-config.store';
-  import { getAssetOriginalUrl } from '$lib/utils';
   import { stackAssets } from '$lib/utils/asset-utils';
   import { suggestDuplicate } from '$lib/utils/duplicate-utils';
   import { handleError } from '$lib/utils/handle-error';
@@ -153,6 +152,14 @@
       $t('confirm'),
     );
   };
+
+  let leftComparisonImage = $derived(duplicates[0]?.assets[0] || null);
+  let rightComparisonImage = $derived(duplicates[0]?.assets[1] || null);
+
+  const handleSetComparisonImages = (leftImage: AssetResponseDto, rightImage: AssetResponseDto) => {
+    leftComparisonImage = leftImage;
+    rightComparisonImage = rightImage;
+  };
 </script>
 
 <UserPageLayout title={data.meta.title + ` (${duplicates.length.toLocaleString($locale)})`} scrollbar={true}>
@@ -214,21 +221,17 @@
       <div class="flex flex-col md:flex-row gap-4 items-start justify-center">
         {#if showComparison}
           {#if duplicates[0].assets.length >= 2}
-            <ImageComparisonSlider
-              leftImage={getAssetOriginalUrl(duplicates[0].assets[0].id)}
-              rightImage={getAssetOriginalUrl(duplicates[0].assets[1].id)}
-              leftAlt={duplicates[0].assets[0].originalFileName}
-              rightAlt={duplicates[0].assets[1].originalFileName}
-            />
+            <ImageComparisonSlider leftImage={leftComparisonImage} rightImage={rightComparisonImage} />
           {/if}
         {/if}
 
         {#key duplicates[0].duplicateId}
           <DuplicatesCompareControl
-            assets={duplicates[0].assets}
+            assets={duplicates[0]?.assets || []}
             onResolve={(duplicateAssetIds, trashIds) =>
               handleResolve(duplicates[0].duplicateId, duplicateAssetIds, trashIds)}
             onStack={(assets) => handleStack(duplicates[0].duplicateId, assets)}
+            onSetComparisonImages={handleSetComparisonImages}
           />
         {/key}
       </div>

@@ -13,6 +13,7 @@
     isSelected: boolean;
     onSelectAsset: (asset: AssetResponseDto) => void;
     onViewAsset: (asset: AssetResponseDto) => void;
+    onSetComparisonSide: (asset: AssetResponseDto, side: 'left' | 'right') => void;
     bestResolution?: boolean;
     bestSize?: boolean;
     isBestFavorite?: boolean;
@@ -24,6 +25,7 @@
     isSelected,
     onSelectAsset,
     onViewAsset,
+    onSetComparisonSide,
     bestResolution = false,
     bestSize = false,
     isBestFavorite = false,
@@ -129,5 +131,23 @@
         {/if}
       {/await}
     </span>
+
+    <!-- Add comparison buttons -->
+    <div class="flex gap-2 mt-2">
+      <button
+        type="button"
+        class="px-3 py-1 rounded-lg dark:bg-immich-dark-primary hover:dark:bg-immich-dark-primary/90 bg-immich-primary/25 hover:bg-immich-primary/50"
+        onclick={() => onSetComparisonSide(asset, 'left')}
+      >
+        {$t('left')}
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded-lg dark:bg-immich-dark-primary hover:dark:bg-immich-dark-primary/90 bg-immich-primary/25 hover:bg-immich-primary/50"
+        onclick={() => onSetComparisonSide(asset, 'right')}
+      >
+        {$t('right')}
+      </button>
+    </div>
   </div>
 </div>

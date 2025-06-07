@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { getAssetOriginalUrl } from '$lib/utils';
+  import { type AssetResponseDto } from '@immich/sdk';
+
   interface Props {
-    leftImage: string;
-    rightImage: string;
-    leftAlt?: string;
-    rightAlt?: string;
+    leftImage: AssetResponseDto;
+    rightImage: AssetResponseDto;
   }
-  let { leftImage, rightImage, leftAlt = '', rightAlt = '' }: Props = $props();
+  let { leftImage, rightImage }: Props = $props();
 
   let slider = $state(50);
 </script>
@@ -24,14 +25,28 @@
     slider = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
   }}
 >
-  <img class="comparison-image" src={rightImage} alt={rightAlt} draggable="false" />
-  <img
-    class="comparison-image"
-    src={leftImage}
-    alt={leftAlt}
-    draggable="false"
-    style="clip-path: inset(0 {100 - slider}% 0 0);"
-  />
+  <!-- Right image (background, fully visible) -->
+  <div class="comparison-image-container" style="clip-path: inset(0 0 0 {slider}%);">
+    <div class="filename right-filename">{rightImage.originalFileName}</div>
+    <img
+      class="comparison-image"
+      src={getAssetOriginalUrl(rightImage.id)}
+      alt={rightImage.originalFileName}
+      draggable="false"
+    />
+  </div>
+
+  <!-- Left image (foreground, clipped based on slider) -->
+  <div class="comparison-image-container" style="clip-path: inset(0 {100 - slider}% 0 0);">
+    <div class="filename left-filename">{leftImage.originalFileName}</div>
+    <img
+      class="comparison-image"
+      src={getAssetOriginalUrl(leftImage.id)}
+      alt={leftImage.originalFileName}
+      draggable="false"
+    />
+  </div>
+
   <div class="comparison-handle" style="left: {slider}%"></div>
 </div>
 
@@ -43,6 +58,13 @@
     aspect-ratio: 4/3;
     overflow: hidden;
     user-select: none;
+  }
+  .comparison-image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
   .comparison-image {
     position: absolute;
@@ -58,7 +80,28 @@
     bottom: 0;
     width: 2px;
     background: #fff;
-    cursor: ew-resize;
     z-index: 2;
+  }
+  .filename {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 4px 8px;
+    margin: 10px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    z-index: 1;
+  }
+  .left-filename {
+    top: 0;
+    left: 0;
+  }
+  .right-filename {
+    top: 0;
+    right: 0;
   }
 </style>

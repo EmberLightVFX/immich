@@ -19,15 +19,33 @@
     assets: AssetResponseDto[];
     onResolve: (duplicateAssetIds: string[], trashIds: string[]) => void;
     onStack: (assets: AssetResponseDto[]) => void;
+    onSetComparisonImages: (leftImage: AssetResponseDto, rightImage: AssetResponseDto) => void;
   }
 
-  let { assets, onResolve, onStack }: Props = $props();
+  let { assets, onResolve, onStack, onSetComparisonImages }: Props = $props();
   const { isViewing: showAssetViewer, asset: viewingAsset, setAsset } = assetViewingStore;
   const getAssetIndex = (id: string) => assets.findIndex((asset) => asset.id === id);
 
   // eslint-disable-next-line svelte/no-unnecessary-state-wrap
   let selectedAssetIds = $state(new SvelteSet<string>());
   let trashCount = $derived(assets.length - selectedAssetIds.size);
+
+  // Add state for comparison images
+  let comparisonLeft = $state<AssetResponseDto | null>(null);
+  let comparisonRight = $state<AssetResponseDto | null>(null);
+
+  // Add handler for setting comparison sides
+  const handleSetComparisonSide = (asset: AssetResponseDto, side: 'left' | 'right') => {
+    if (side === 'left') {
+      comparisonLeft = asset;
+    } else {
+      comparisonRight = asset;
+    }
+
+    if (comparisonLeft && comparisonRight) {
+      onSetComparisonImages(comparisonLeft, comparisonRight);
+    }
+  };
 
   onMount(() => {
     const suggestedAsset = suggestDuplicate(assets);
@@ -38,6 +56,11 @@
     }
 
     selectedAssetIds.add(suggestedAsset.id);
+
+    if (assets.length >= 2) {
+      comparisonLeft = assets[0];
+      comparisonRight = assets[1];
+    }
   });
 
   onDestroy(() => {
@@ -210,6 +233,7 @@
         {onSelectAsset}
         isSelected={selectedAssetIds.has(asset.id)}
         onViewAsset={(asset) => setAsset(asset)}
+        onSetComparisonSide={handleSetComparisonSide}
         bestResolution={bestResolutionIds.has(asset.id)}
         bestSize={bestSizeIds.has(asset.id)}
         isBestFavorite={anyFavorite && favoriteIds.has(asset.id)}
