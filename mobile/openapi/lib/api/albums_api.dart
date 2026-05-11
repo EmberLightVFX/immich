@@ -16,15 +16,18 @@ class AlbumsApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'PUT /albums/{id}/assets' operation and returns the [Response].
+  /// Add assets to an album
+  ///
+  /// Add multiple assets to a specific album by its ID.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
   ///
   /// * [BulkIdsDto] bulkIdsDto (required):
-  ///
-  /// * [String] key:
-  Future<Response> addAssetsToAlbumWithHttpInfo(String id, BulkIdsDto bulkIdsDto, { String? key, }) async {
+  Future<Response> addAssetsToAlbumWithHttpInfo(String id, BulkIdsDto bulkIdsDto,) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/albums/{id}/assets'
       .replaceAll('{id}', id);
@@ -35,10 +38,6 @@ class AlbumsApi {
     final queryParams = <QueryParam>[];
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
-
-    if (key != null) {
-      queryParams.addAll(_queryParams('', 'key', key));
-    }
 
     const contentTypes = <String>['application/json'];
 
@@ -54,15 +53,17 @@ class AlbumsApi {
     );
   }
 
+  /// Add assets to an album
+  ///
+  /// Add multiple assets to a specific album by its ID.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
   ///
   /// * [BulkIdsDto] bulkIdsDto (required):
-  ///
-  /// * [String] key:
-  Future<List<BulkIdResponseDto>?> addAssetsToAlbum(String id, BulkIdsDto bulkIdsDto, { String? key, }) async {
-    final response = await addAssetsToAlbumWithHttpInfo(id, bulkIdsDto,  key: key, );
+  Future<List<BulkIdResponseDto>?> addAssetsToAlbum(String id, BulkIdsDto bulkIdsDto,) async {
+    final response = await addAssetsToAlbumWithHttpInfo(id, bulkIdsDto,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -79,7 +80,68 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'PUT /albums/{id}/users' operation and returns the [Response].
+  /// Add assets to albums
+  ///
+  /// Send a list of asset IDs and album IDs to add each asset to each album.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AlbumsAddAssetsDto] albumsAddAssetsDto (required):
+  Future<Response> addAssetsToAlbumsWithHttpInfo(AlbumsAddAssetsDto albumsAddAssetsDto,) async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/albums/assets';
+
+    // ignore: prefer_final_locals
+    Object? postBody = albumsAddAssetsDto;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Add assets to albums
+  ///
+  /// Send a list of asset IDs and album IDs to add each asset to each album.
+  ///
+  /// Parameters:
+  ///
+  /// * [AlbumsAddAssetsDto] albumsAddAssetsDto (required):
+  Future<AlbumsAddAssetsResponseDto?> addAssetsToAlbums(AlbumsAddAssetsDto albumsAddAssetsDto,) async {
+    final response = await addAssetsToAlbumsWithHttpInfo(albumsAddAssetsDto,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'AlbumsAddAssetsResponseDto',) as AlbumsAddAssetsResponseDto;
+    
+    }
+    return null;
+  }
+
+  /// Share album with users
+  ///
+  /// Share an album with multiple users. Each user can be given a specific role in the album.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -111,6 +173,10 @@ class AlbumsApi {
     );
   }
 
+  /// Share album with users
+  ///
+  /// Share an album with multiple users. Each user can be given a specific role in the album.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -131,7 +197,12 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'POST /albums' operation and returns the [Response].
+  /// Create an album
+  ///
+  /// Create a new album. The album can also be created with initial users and assets.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [CreateAlbumDto] createAlbumDto (required):
@@ -160,6 +231,10 @@ class AlbumsApi {
     );
   }
 
+  /// Create an album
+  ///
+  /// Create a new album. The album can also be created with initial users and assets.
+  ///
   /// Parameters:
   ///
   /// * [CreateAlbumDto] createAlbumDto (required):
@@ -178,7 +253,12 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'DELETE /albums/{id}' operation and returns the [Response].
+  /// Delete an album
+  ///
+  /// Delete a specific album by its ID. Note the album is initially trashed and then immediately scheduled for deletion, but relies on a background job to complete the process.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -208,6 +288,10 @@ class AlbumsApi {
     );
   }
 
+  /// Delete an album
+  ///
+  /// Delete a specific album by its ID. Note the album is initially trashed and then immediately scheduled for deletion, but relies on a background job to complete the process.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -218,15 +302,20 @@ class AlbumsApi {
     }
   }
 
-  /// Performs an HTTP 'GET /albums/{id}' operation and returns the [Response].
+  /// Retrieve an album
+  ///
+  /// Retrieve information about a specific album by its ID.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
   ///
   /// * [String] key:
   ///
-  /// * [bool] withoutAssets:
-  Future<Response> getAlbumInfoWithHttpInfo(String id, { String? key, bool? withoutAssets, }) async {
+  /// * [String] slug:
+  Future<Response> getAlbumInfoWithHttpInfo(String id, { String? key, String? slug, }) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/albums/{id}'
       .replaceAll('{id}', id);
@@ -241,8 +330,8 @@ class AlbumsApi {
     if (key != null) {
       queryParams.addAll(_queryParams('', 'key', key));
     }
-    if (withoutAssets != null) {
-      queryParams.addAll(_queryParams('', 'withoutAssets', withoutAssets));
+    if (slug != null) {
+      queryParams.addAll(_queryParams('', 'slug', slug));
     }
 
     const contentTypes = <String>[];
@@ -259,15 +348,19 @@ class AlbumsApi {
     );
   }
 
+  /// Retrieve an album
+  ///
+  /// Retrieve information about a specific album by its ID.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
   ///
   /// * [String] key:
   ///
-  /// * [bool] withoutAssets:
-  Future<AlbumResponseDto?> getAlbumInfo(String id, { String? key, bool? withoutAssets, }) async {
-    final response = await getAlbumInfoWithHttpInfo(id,  key: key, withoutAssets: withoutAssets, );
+  /// * [String] slug:
+  Future<AlbumResponseDto?> getAlbumInfo(String id, { String? key, String? slug, }) async {
+    final response = await getAlbumInfoWithHttpInfo(id,  key: key, slug: slug, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -281,7 +374,86 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /albums/statistics' operation and returns the [Response].
+  /// Retrieve album map markers
+  ///
+  /// Retrieve map marker information for a specific album by its ID.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  ///
+  /// * [String] key:
+  ///
+  /// * [String] slug:
+  Future<Response> getAlbumMapMarkersWithHttpInfo(String id, { String? key, String? slug, }) async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/albums/{id}/map-markers'
+      .replaceAll('{id}', id);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    if (key != null) {
+      queryParams.addAll(_queryParams('', 'key', key));
+    }
+    if (slug != null) {
+      queryParams.addAll(_queryParams('', 'slug', slug));
+    }
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Retrieve album map markers
+  ///
+  /// Retrieve map marker information for a specific album by its ID.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  ///
+  /// * [String] key:
+  ///
+  /// * [String] slug:
+  Future<List<MapMarkerResponseDto>?> getAlbumMapMarkers(String id, { String? key, String? slug, }) async {
+    final response = await getAlbumMapMarkersWithHttpInfo(id,  key: key, slug: slug, );
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      final responseBody = await _decodeBodyBytes(response);
+      return (await apiClient.deserializeAsync(responseBody, 'List<MapMarkerResponseDto>') as List)
+        .cast<MapMarkerResponseDto>()
+        .toList(growable: false);
+
+    }
+    return null;
+  }
+
+  /// Retrieve album statistics
+  ///
+  /// Returns statistics about the albums available to the authenticated user.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getAlbumStatisticsWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/albums/statistics';
@@ -307,6 +479,9 @@ class AlbumsApi {
     );
   }
 
+  /// Retrieve album statistics
+  ///
+  /// Returns statistics about the albums available to the authenticated user.
   Future<AlbumStatisticsResponseDto?> getAlbumStatistics() async {
     final response = await getAlbumStatisticsWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -322,14 +497,23 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /albums' operation and returns the [Response].
+  /// List all albums
+  ///
+  /// Retrieve a list of albums available to the authenticated user.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] assetId:
-  ///   Only returns albums that contain the asset Ignores the shared parameter undefined: get all albums
+  ///   Filter albums containing this asset ID (ignores other parameters)
   ///
-  /// * [bool] shared:
-  Future<Response> getAllAlbumsWithHttpInfo({ String? assetId, bool? shared, }) async {
+  /// * [bool] isOwned:
+  ///   Filter by ownership: true = only owned, false = only shared-with-me, undefined = no filter
+  ///
+  /// * [bool] isShared:
+  ///   Filter by shared status: true = only shared, false = not shared, undefined = no filter
+  Future<Response> getAllAlbumsWithHttpInfo({ String? assetId, bool? isOwned, bool? isShared, }) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/albums';
 
@@ -343,8 +527,11 @@ class AlbumsApi {
     if (assetId != null) {
       queryParams.addAll(_queryParams('', 'assetId', assetId));
     }
-    if (shared != null) {
-      queryParams.addAll(_queryParams('', 'shared', shared));
+    if (isOwned != null) {
+      queryParams.addAll(_queryParams('', 'isOwned', isOwned));
+    }
+    if (isShared != null) {
+      queryParams.addAll(_queryParams('', 'isShared', isShared));
     }
 
     const contentTypes = <String>[];
@@ -361,14 +548,22 @@ class AlbumsApi {
     );
   }
 
+  /// List all albums
+  ///
+  /// Retrieve a list of albums available to the authenticated user.
+  ///
   /// Parameters:
   ///
   /// * [String] assetId:
-  ///   Only returns albums that contain the asset Ignores the shared parameter undefined: get all albums
+  ///   Filter albums containing this asset ID (ignores other parameters)
   ///
-  /// * [bool] shared:
-  Future<List<AlbumResponseDto>?> getAllAlbums({ String? assetId, bool? shared, }) async {
-    final response = await getAllAlbumsWithHttpInfo( assetId: assetId, shared: shared, );
+  /// * [bool] isOwned:
+  ///   Filter by ownership: true = only owned, false = only shared-with-me, undefined = no filter
+  ///
+  /// * [bool] isShared:
+  ///   Filter by shared status: true = only shared, false = not shared, undefined = no filter
+  Future<List<AlbumResponseDto>?> getAllAlbums({ String? assetId, bool? isOwned, bool? isShared, }) async {
+    final response = await getAllAlbumsWithHttpInfo( assetId: assetId, isOwned: isOwned, isShared: isShared, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -385,7 +580,12 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'DELETE /albums/{id}/assets' operation and returns the [Response].
+  /// Remove assets from an album
+  ///
+  /// Remove multiple assets from a specific album by its ID.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -417,6 +617,10 @@ class AlbumsApi {
     );
   }
 
+  /// Remove assets from an album
+  ///
+  /// Remove multiple assets from a specific album by its ID.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -440,7 +644,12 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'DELETE /albums/{id}/user/{userId}' operation and returns the [Response].
+  /// Remove user from album
+  ///
+  /// Remove a user from an album. Use an ID of \"me\" to leave a shared album.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -473,6 +682,10 @@ class AlbumsApi {
     );
   }
 
+  /// Remove user from album
+  ///
+  /// Remove a user from an album. Use an ID of \"me\" to leave a shared album.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -485,7 +698,12 @@ class AlbumsApi {
     }
   }
 
-  /// Performs an HTTP 'PATCH /albums/{id}' operation and returns the [Response].
+  /// Update an album
+  ///
+  /// Update the information of a specific album by its ID. This endpoint can be used to update the album name, description, sort order, etc. However, it is not used to add or remove assets or users from the album.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -517,6 +735,10 @@ class AlbumsApi {
     );
   }
 
+  /// Update an album
+  ///
+  /// Update the information of a specific album by its ID. This endpoint can be used to update the album name, description, sort order, etc. However, it is not used to add or remove assets or users from the album.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -537,7 +759,12 @@ class AlbumsApi {
     return null;
   }
 
-  /// Performs an HTTP 'PUT /albums/{id}/user/{userId}' operation and returns the [Response].
+  /// Update user role
+  ///
+  /// Change the role for a specific user in a specific album.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -572,6 +799,10 @@ class AlbumsApi {
     );
   }
 
+  /// Update user role
+  ///
+  /// Change the role for a specific user in a specific album.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):

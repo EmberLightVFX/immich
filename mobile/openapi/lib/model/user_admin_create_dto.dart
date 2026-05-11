@@ -15,9 +15,11 @@ class UserAdminCreateDto {
   UserAdminCreateDto({
     this.avatarColor,
     required this.email,
+    this.isAdmin,
     required this.name,
     this.notify,
     required this.password,
+    this.pinCode,
     this.quotaSizeInBytes,
     this.shouldChangePassword,
     this.storageLabel,
@@ -25,10 +27,22 @@ class UserAdminCreateDto {
 
   UserAvatarColor? avatarColor;
 
+  /// User email
   String email;
 
+  /// Grant admin privileges
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  bool? isAdmin;
+
+  /// User name
   String name;
 
+  /// Send notification email
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -37,11 +51,19 @@ class UserAdminCreateDto {
   ///
   bool? notify;
 
+  /// User password
   String password;
 
+  /// PIN code
+  String? pinCode;
+
+  /// Storage quota in bytes
+  ///
   /// Minimum value: 0
+  /// Maximum value: 9007199254740991
   int? quotaSizeInBytes;
 
+  /// Require password change on next login
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -50,15 +72,18 @@ class UserAdminCreateDto {
   ///
   bool? shouldChangePassword;
 
+  /// Storage label
   String? storageLabel;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is UserAdminCreateDto &&
     other.avatarColor == avatarColor &&
     other.email == email &&
+    other.isAdmin == isAdmin &&
     other.name == name &&
     other.notify == notify &&
     other.password == password &&
+    other.pinCode == pinCode &&
     other.quotaSizeInBytes == quotaSizeInBytes &&
     other.shouldChangePassword == shouldChangePassword &&
     other.storageLabel == storageLabel;
@@ -68,15 +93,17 @@ class UserAdminCreateDto {
     // ignore: unnecessary_parenthesis
     (avatarColor == null ? 0 : avatarColor!.hashCode) +
     (email.hashCode) +
+    (isAdmin == null ? 0 : isAdmin!.hashCode) +
     (name.hashCode) +
     (notify == null ? 0 : notify!.hashCode) +
     (password.hashCode) +
+    (pinCode == null ? 0 : pinCode!.hashCode) +
     (quotaSizeInBytes == null ? 0 : quotaSizeInBytes!.hashCode) +
     (shouldChangePassword == null ? 0 : shouldChangePassword!.hashCode) +
     (storageLabel == null ? 0 : storageLabel!.hashCode);
 
   @override
-  String toString() => 'UserAdminCreateDto[avatarColor=$avatarColor, email=$email, name=$name, notify=$notify, password=$password, quotaSizeInBytes=$quotaSizeInBytes, shouldChangePassword=$shouldChangePassword, storageLabel=$storageLabel]';
+  String toString() => 'UserAdminCreateDto[avatarColor=$avatarColor, email=$email, isAdmin=$isAdmin, name=$name, notify=$notify, password=$password, pinCode=$pinCode, quotaSizeInBytes=$quotaSizeInBytes, shouldChangePassword=$shouldChangePassword, storageLabel=$storageLabel]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -86,6 +113,11 @@ class UserAdminCreateDto {
     //  json[r'avatarColor'] = null;
     }
       json[r'email'] = this.email;
+    if (this.isAdmin != null) {
+      json[r'isAdmin'] = this.isAdmin;
+    } else {
+    //  json[r'isAdmin'] = null;
+    }
       json[r'name'] = this.name;
     if (this.notify != null) {
       json[r'notify'] = this.notify;
@@ -93,6 +125,11 @@ class UserAdminCreateDto {
     //  json[r'notify'] = null;
     }
       json[r'password'] = this.password;
+    if (this.pinCode != null) {
+      json[r'pinCode'] = this.pinCode;
+    } else {
+    //  json[r'pinCode'] = null;
+    }
     if (this.quotaSizeInBytes != null) {
       json[r'quotaSizeInBytes'] = this.quotaSizeInBytes;
     } else {
@@ -122,9 +159,11 @@ class UserAdminCreateDto {
       return UserAdminCreateDto(
         avatarColor: UserAvatarColor.fromJson(json[r'avatarColor']),
         email: mapValueOfType<String>(json, r'email')!,
+        isAdmin: mapValueOfType<bool>(json, r'isAdmin'),
         name: mapValueOfType<String>(json, r'name')!,
         notify: mapValueOfType<bool>(json, r'notify'),
         password: mapValueOfType<String>(json, r'password')!,
+        pinCode: mapValueOfType<String>(json, r'pinCode'),
         quotaSizeInBytes: mapValueOfType<int>(json, r'quotaSizeInBytes'),
         shouldChangePassword: mapValueOfType<bool>(json, r'shouldChangePassword'),
         storageLabel: mapValueOfType<String>(json, r'storageLabel'),

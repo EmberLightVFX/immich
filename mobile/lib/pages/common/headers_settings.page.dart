@@ -7,6 +7,8 @@ import 'package:flutter_hooks/flutter_hooks.dart' hide Store;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/domain/models/store.model.dart';
 import 'package:immich_mobile/entities/store.entity.dart';
+import 'package:immich_mobile/generated/translations.g.dart';
+import 'package:immich_mobile/providers/api.provider.dart';
 
 class SettingsHeader {
   String key = "";
@@ -19,7 +21,6 @@ class HeaderSettingsPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final apiService = ref.watch(apiServiceProvider);
     final headers = useState<List<SettingsHeader>>([]);
     final setInitialHeaders = useState(false);
 
@@ -60,7 +61,7 @@ class HeaderSettingsPage extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('advanced_settings_proxy_headers_title').tr(),
+        title: Text(context.t.headers_settings_tile_title),
         centerTitle: false,
         actions: [
           IconButton(
@@ -74,32 +75,33 @@ class HeaderSettingsPage extends HookConsumerWidget {
         ],
       ),
       body: PopScope(
-        onPopInvokedWithResult: (didPop, _) => saveHeaders(headers.value),
+        onPopInvokedWithResult: (didPop, _) => saveHeaders(ref, headers.value),
         child: ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
           itemCount: list.length,
           itemBuilder: (ctx, index) => list[index],
-          separatorBuilder: (context, index) => const Padding(
-            padding: EdgeInsets.only(bottom: 16.0, left: 8, right: 8),
-            child: Divider(),
-          ),
+          separatorBuilder: (context, index) =>
+              const Padding(padding: EdgeInsets.only(bottom: 16.0, left: 8, right: 8), child: Divider()),
         ),
       ),
     );
   }
 
-  saveHeaders(List<SettingsHeader> headers) {
+  saveHeaders(WidgetRef ref, List<SettingsHeader> headers) async {
     final headersMap = {};
     for (var header in headers) {
       final key = header.key.trim();
       final value = header.value.trim();
 
-      if (key.isEmpty || value.isEmpty) continue;
+      if (key.isEmpty || value.isEmpty) {
+        continue;
+      }
       headersMap[key] = value;
     }
 
     var encoded = jsonEncode(headersMap);
-    Store.put(StoreKey.customHeaders, encoded);
+    await Store.put(StoreKey.customHeaders, encoded);
+    await ref.read(apiServiceProvider).updateHeaders();
   }
 }
 
@@ -109,12 +111,9 @@ class HeaderKeyValueSettings extends StatelessWidget {
   final SettingsHeader header;
   final Function() onRemove;
 
-  HeaderKeyValueSettings({
-    super.key,
-    required this.header,
-    required this.onRemove,
-  })  : keyController = TextEditingController(text: header.key),
-        valueController = TextEditingController(text: header.value);
+  HeaderKeyValueSettings({super.key, required this.header, required this.onRemove})
+    : keyController = TextEditingController(text: header.key),
+      valueController = TextEditingController(text: header.value);
 
   String? emptyFieldValidator(String? value) {
     if (value == null || value.isEmpty) {
@@ -150,9 +149,7 @@ class HeaderKeyValueSettings extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: IconButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
                   color: Colors.red[400],
                   onPressed: onRemove,
                   icon: const Icon(Icons.delete_outline),

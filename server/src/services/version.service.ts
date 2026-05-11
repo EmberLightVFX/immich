@@ -4,10 +4,11 @@ import semver, { SemVer } from 'semver';
 import { serverVersion } from 'src/constants';
 import { OnEvent, OnJob } from 'src/decorators';
 import { ReleaseNotification, ServerVersionResponseDto } from 'src/dtos/server.dto';
-import { DatabaseLock, ImmichEnvironment, JobName, JobStatus, QueueName, SystemMetadataKey } from 'src/enum';
+import { CronJob, DatabaseLock, ImmichWorker, JobName, JobStatus, QueueName, SystemMetadataKey } from 'src/enum';
 import { ArgOf } from 'src/repositories/event.repository';
 import { BaseService } from 'src/services/base.service';
 import { VersionCheckMetadata } from 'src/types';
+import { handlePromiseError } from 'src/utils/misc';
 
 const asNotification = ({ checkedAt, releaseVersion }: VersionCheckMetadata): ReleaseNotification => {
   return {
@@ -20,9 +21,21 @@ const asNotification = ({ checkedAt, releaseVersion }: VersionCheckMetadata): Re
 
 @Injectable()
 export class VersionService extends BaseService {
-  @OnEvent({ name: 'app.bootstrap' })
+  @OnEvent({ name: 'AppBootstrap', workers: [ImmichWorker.Microservices] })
   async onBootstrap(): Promise<void> {
-    await this.handleVersionCheck();
+    const hasLock = await this.databaseRepository.tryLock(DatabaseLock.VersionCheck);
+    if (hasLock) {
+      await this.handleVersionCheck();
+
+      const randomMinute = Math.floor(Math.random() * 60);
+      const expression = `${randomMinute} * * * *`;
+      this.logger.debug(`Scheduling version check for cron ${expression}`);
+      this.cronRepository.create({
+        name: CronJob.VersionCheck,
+        expression,
+        onTick: () => handlePromiseError(this.handleQueueVersionCheck(), this.logger),
+      });
+    }
 
     await this.databaseRepository.withLock(DatabaseLock.VersionHistory, async () => {
       const previous = await this.versionRepository.getLatest();
@@ -41,7 +54,7 @@ export class VersionService extends BaseService {
 
         const needsNewMemories = semver.lt(previousVersion, '1.129.0');
         if (needsNewMemories) {
-          await this.jobRepository.queue({ name: JobName.MEMORIES_CREATE });
+          await this.jobRepository.queue({ name: JobName.MemoryGenerate });
         }
       }
     });
@@ -55,59 +68,65 @@ export class VersionService extends BaseService {
     return this.versionRepository.getAll();
   }
 
-  async handleQueueVersionCheck() {
-    await this.jobRepository.queue({ name: JobName.VERSION_CHECK, data: {} });
+  @OnEvent({ name: 'ConfigUpdate' })
+  async onConfigUpdate({ oldConfig, newConfig }: ArgOf<'ConfigUpdate'>) {
+    if (!oldConfig.newVersionCheck.enabled && newConfig.newVersionCheck.enabled) {
+      await this.handleQueueVersionCheck();
+    }
   }
 
-  @OnJob({ name: JobName.VERSION_CHECK, queue: QueueName.BACKGROUND_TASK })
+  async handleQueueVersionCheck() {
+    await this.jobRepository.queue({ name: JobName.VersionCheck, data: {} });
+  }
+
+  @OnJob({ name: JobName.VersionCheck, queue: QueueName.BackgroundTask })
   async handleVersionCheck(): Promise<JobStatus> {
     try {
       this.logger.debug('Running version check');
 
-      const { environment } = this.configRepository.getEnv();
-      if (environment === ImmichEnvironment.DEVELOPMENT) {
-        return JobStatus.SKIPPED;
-      }
-
       const { newVersionCheck } = await this.getConfig({ withCache: true });
       if (!newVersionCheck.enabled) {
-        return JobStatus.SKIPPED;
+        return JobStatus.Skipped;
       }
 
-      const versionCheck = await this.systemMetadataRepository.get(SystemMetadataKey.VERSION_CHECK_STATE);
+      const versionCheck = await this.systemMetadataRepository.get(SystemMetadataKey.VersionCheckState);
       if (versionCheck?.checkedAt) {
         const lastUpdate = DateTime.fromISO(versionCheck.checkedAt);
-        const elapsedTime = DateTime.now().diff(lastUpdate).as('minutes');
-        // check once per hour (max)
-        if (elapsedTime < 60) {
-          return JobStatus.SKIPPED;
+        const elapsedTime = DateTime.now().diff(lastUpdate).as('seconds');
+        if (elapsedTime < 50) {
+          return JobStatus.Skipped;
         }
       }
 
-      const { tag_name: releaseVersion, published_at: publishedAt } =
-        await this.serverInfoRepository.getGitHubRelease();
+      const { version: releaseVersion, published_at: publishedAt } = await this.serverInfoRepository.getLatestRelease();
       const metadata: VersionCheckMetadata = { checkedAt: DateTime.utc().toISO(), releaseVersion };
 
-      await this.systemMetadataRepository.set(SystemMetadataKey.VERSION_CHECK_STATE, metadata);
+      await this.systemMetadataRepository.set(SystemMetadataKey.VersionCheckState, metadata);
 
       if (semver.gt(releaseVersion, serverVersion)) {
         this.logger.log(`Found ${releaseVersion}, released at ${new Date(publishedAt).toLocaleString()}`);
-        this.eventRepository.clientBroadcast('on_new_release', asNotification(metadata));
+        this.websocketRepository.clientBroadcast('on_new_release', asNotification(metadata));
       }
     } catch (error: Error | any) {
-      this.logger.warn(`Unable to run version check: ${error}`, error?.stack);
-      return JobStatus.FAILED;
+      this.logger.warn(`Unable to run version check: ${error}\n${error?.stack}`);
+      return JobStatus.Failed;
     }
 
-    return JobStatus.SUCCESS;
+    return JobStatus.Success;
   }
 
-  @OnEvent({ name: 'websocket.connect' })
-  async onWebsocketConnection({ userId }: ArgOf<'websocket.connect'>) {
-    this.eventRepository.clientSend('on_server_version', userId, serverVersion);
-    const metadata = await this.systemMetadataRepository.get(SystemMetadataKey.VERSION_CHECK_STATE);
+  @OnEvent({ name: 'WebsocketConnect' })
+  async onWebsocketConnection({ userId }: ArgOf<'WebsocketConnect'>) {
+    this.websocketRepository.clientSend('on_server_version', userId, serverVersion);
+
+    const { newVersionCheck } = await this.getConfig({ withCache: true });
+    if (!newVersionCheck.enabled) {
+      return;
+    }
+
+    const metadata = await this.systemMetadataRepository.get(SystemMetadataKey.VersionCheckState);
     if (metadata) {
-      this.eventRepository.clientSend('on_new_release', userId, asNotification(metadata));
+      this.websocketRepository.clientSend('on_new_release', userId, asNotification(metadata));
     }
   }
 }

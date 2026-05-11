@@ -4,8 +4,7 @@ import 'package:punycode/punycode.dart';
 
 String sanitizeUrl(String url) {
   // Add schema if none is set
-  final urlWithSchema =
-      url.trimLeft().startsWith(RegExp(r"https?://")) ? url : "https://$url";
+  final urlWithSchema = url.trimLeft().startsWith(RegExp(r"https?://")) ? url : "https://$url";
 
   // Remove trailing slash(es)
   return urlWithSchema.trimRight().replaceFirst(RegExp(r"/+$"), "");
@@ -43,15 +42,20 @@ String? getServerUrl() {
 ///
 String punycodeEncodeUrl(String serverUrl) {
   final serverUri = Uri.tryParse(serverUrl);
-  if (serverUri == null || serverUri.host.isEmpty) return '';
+  if (serverUri == null || serverUri.host.isEmpty) {
+    return '';
+  }
 
-  final encodedHost = Uri.decodeComponent(serverUri.host).split('.').map(
-    (segment) {
-      // If segment is already ASCII, then return as it is.
-      if (segment.runes.every((c) => c < 0x80)) return segment;
-      return 'xn--${punycodeEncode(segment)}';
-    },
-  ).join('.');
+  final encodedHost = Uri.decodeComponent(serverUri.host)
+      .split('.')
+      .map((segment) {
+        // If segment is already ASCII, then return as it is.
+        if (segment.runes.every((c) => c < 0x80)) {
+          return segment;
+        }
+        return 'xn--${punycodeEncode(segment)}';
+      })
+      .join('.');
 
   return serverUri.replace(host: encodedHost).toString();
 }
@@ -75,17 +79,20 @@ String punycodeEncodeUrl(String serverUrl) {
 ///
 String? punycodeDecodeUrl(String? serverUrl) {
   final serverUri = serverUrl != null ? Uri.tryParse(serverUrl) : null;
-  if (serverUri == null || serverUri.host.isEmpty) return null;
+  if (serverUri == null || serverUri.host.isEmpty) {
+    return null;
+  }
 
-  final decodedHost = serverUri.host.split('.').map(
-    (segment) {
-      if (segment.toLowerCase().startsWith('xn--')) {
-        return punycodeDecode(segment.substring(4));
-      }
-      // If segment is not punycode encoded, then return as it is.
-      return segment;
-    },
-  ).join('.');
+  final decodedHost = serverUri.host
+      .split('.')
+      .map((segment) {
+        if (segment.toLowerCase().startsWith('xn--')) {
+          return punycodeDecode(segment.substring(4));
+        }
+        // If segment is not punycode encoded, then return as it is.
+        return segment;
+      })
+      .join('.');
 
   return Uri.decodeFull(serverUri.replace(host: decodedHost).toString());
 }

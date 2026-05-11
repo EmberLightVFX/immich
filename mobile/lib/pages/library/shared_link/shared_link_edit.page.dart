@@ -19,23 +19,18 @@ class SharedLinkEditPage extends HookConsumerWidget {
   final List<String>? assetsList;
   final String? albumId;
 
-  const SharedLinkEditPage({
-    super.key,
-    this.existingLink,
-    this.assetsList,
-    this.albumId,
-  });
+  const SharedLinkEditPage({super.key, this.existingLink, this.assetsList, this.albumId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const padding = 20.0;
     final themeData = context.themeData;
     final colorScheme = context.colorScheme;
-    final descriptionController =
-        useTextEditingController(text: existingLink?.description ?? "");
+    final descriptionController = useTextEditingController(text: existingLink?.description ?? "");
     final descriptionFocusNode = useFocusNode();
-    final passwordController =
-        useTextEditingController(text: existingLink?.password ?? "");
+    final passwordController = useTextEditingController(text: existingLink?.password ?? "");
+    final slugController = useTextEditingController(text: existingLink?.slug ?? "");
+    final slugFocusNode = useFocusNode();
     final showMetadata = useState(existingLink?.showMetadata ?? true);
     final allowDownload = useState(existingLink?.allowDownload ?? true);
     final allowUpload = useState(existingLink?.allowUpload ?? false);
@@ -48,20 +43,11 @@ class SharedLinkEditPage extends HookConsumerWidget {
         if (existingLink!.type == SharedLinkSource.album) {
           return Row(
             children: [
-              const Text(
-                'public_album',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ).tr(),
-              const Text(
-                " | ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text('public_album', style: TextStyle(fontWeight: FontWeight.bold)).tr(),
+              const Text(" | ", style: TextStyle(fontWeight: FontWeight.bold)),
               Text(
                 existingLink!.title,
-                style: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
               ),
             ],
           );
@@ -70,21 +56,12 @@ class SharedLinkEditPage extends HookConsumerWidget {
         if (existingLink!.type == SharedLinkSource.individual) {
           return Row(
             children: [
-              const Text(
-                'shared_link_individual_shared',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ).tr(),
-              const Text(
-                " | ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text('shared_link_individual_shared', style: TextStyle(fontWeight: FontWeight.bold)).tr(),
+              const Text(" | ", style: TextStyle(fontWeight: FontWeight.bold)),
               Expanded(
                 child: Text(
                   existingLink!.description ?? "--",
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -93,10 +70,7 @@ class SharedLinkEditPage extends HookConsumerWidget {
         }
       }
 
-      return const Text(
-        "create_link_to_share_description",
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ).tr();
+      return const Text("create_link_to_share_description", style: TextStyle(fontWeight: FontWeight.bold)).tr();
     }
 
     Widget buildDescriptionField() {
@@ -108,20 +82,12 @@ class SharedLinkEditPage extends HookConsumerWidget {
         autofocus: false,
         decoration: InputDecoration(
           labelText: 'description'.tr(),
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
-          ),
+          labelStyle: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           hintText: 'shared_link_edit_description_hint'.tr(),
-          hintStyle: const TextStyle(
-            fontWeight: FontWeight.normal,
-            fontSize: 14,
-          ),
-          disabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
-          ),
+          hintStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+          disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.5))),
         ),
         onTapOutside: (_) => descriptionFocusNode.unfocus(),
       );
@@ -134,52 +100,55 @@ class SharedLinkEditPage extends HookConsumerWidget {
         autofocus: false,
         decoration: InputDecoration(
           labelText: 'password'.tr(),
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
-          ),
+          labelStyle: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           border: const OutlineInputBorder(),
           hintText: 'shared_link_edit_password_hint'.tr(),
-          hintStyle: const TextStyle(
-            fontWeight: FontWeight.normal,
-            fontSize: 14,
-          ),
-          disabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
-          ),
+          hintStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+          disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.5))),
         ),
+      );
+    }
+
+    Widget buildSlugField() {
+      return TextField(
+        controller: slugController,
+        enabled: newShareLink.value.isEmpty,
+        focusNode: slugFocusNode,
+        textInputAction: TextInputAction.done,
+        autofocus: false,
+        decoration: InputDecoration(
+          labelText: 'custom_url'.tr(),
+          labelStyle: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          border: const OutlineInputBorder(),
+          hintText: 'custom_url'.tr(),
+          hintStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+          disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.5))),
+        ),
+        onTapOutside: (_) => slugFocusNode.unfocus(),
       );
     }
 
     Widget buildShowMetaButton() {
       return SwitchListTile.adaptive(
         value: showMetadata.value,
-        onChanged: newShareLink.value.isEmpty
-            ? (value) => showMetadata.value = value
-            : null,
-        activeColor: colorScheme.primary,
+        onChanged: newShareLink.value.isEmpty ? (value) => showMetadata.value = value : null,
+        activeThumbColor: colorScheme.primary,
         dense: true,
-        title: Text(
-          "show_metadata",
-          style: themeData.textTheme.labelLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ).tr(),
+        title: Text("show_metadata", style: themeData.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)).tr(),
       );
     }
 
     Widget buildAllowDownloadButton() {
       return SwitchListTile.adaptive(
         value: allowDownload.value,
-        onChanged: newShareLink.value.isEmpty
-            ? (value) => allowDownload.value = value
-            : null,
-        activeColor: colorScheme.primary,
+        onChanged: newShareLink.value.isEmpty ? (value) => allowDownload.value = value : null,
+        activeThumbColor: colorScheme.primary,
         dense: true,
         title: Text(
           "allow_public_user_to_download",
-          style: themeData.textTheme.labelLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: themeData.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
         ).tr(),
       );
     }
@@ -187,15 +156,12 @@ class SharedLinkEditPage extends HookConsumerWidget {
     Widget buildAllowUploadButton() {
       return SwitchListTile.adaptive(
         value: allowUpload.value,
-        onChanged: newShareLink.value.isEmpty
-            ? (value) => allowUpload.value = value
-            : null,
-        activeColor: colorScheme.primary,
+        onChanged: newShareLink.value.isEmpty ? (value) => allowUpload.value = value : null,
+        activeThumbColor: colorScheme.primary,
         dense: true,
         title: Text(
           "allow_public_user_to_upload",
-          style: themeData.textTheme.labelLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: themeData.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
         ).tr(),
       );
     }
@@ -203,15 +169,12 @@ class SharedLinkEditPage extends HookConsumerWidget {
     Widget buildEditExpiryButton() {
       return SwitchListTile.adaptive(
         value: editExpiry.value,
-        onChanged: newShareLink.value.isEmpty
-            ? (value) => editExpiry.value = value
-            : null,
-        activeColor: colorScheme.primary,
+        onChanged: newShareLink.value.isEmpty ? (value) => editExpiry.value = value : null,
+        activeThumbColor: colorScheme.primary,
         dense: true,
         title: Text(
           "change_expiration_time",
-          style: themeData.textTheme.labelLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: themeData.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
         ).tr(),
       );
     }
@@ -220,62 +183,43 @@ class SharedLinkEditPage extends HookConsumerWidget {
       return DropdownMenu(
         label: Text(
           "expire_after",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
         ).tr(),
         enableSearch: false,
         enableFilter: false,
         width: context.width - 40,
         initialSelection: expiryAfter.value,
-        enabled: newShareLink.value.isEmpty &&
-            (existingLink == null || editExpiry.value),
+        enabled: newShareLink.value.isEmpty && (existingLink == null || editExpiry.value),
         onSelected: (value) {
           expiryAfter.value = value!;
         },
         dropdownMenuEntries: [
-          DropdownMenuEntry(
-            value: 0,
-            label: "never".tr(),
-          ),
+          DropdownMenuEntry(value: 0, label: "never".tr()),
           DropdownMenuEntry(
             value: 30,
-            label: "shared_link_edit_expire_after_option_minutes"
-                .tr(namedArgs: {'count': "30"}),
+            label: "shared_link_edit_expire_after_option_minutes".tr(namedArgs: {'count': "30"}),
           ),
-          DropdownMenuEntry(
-            value: 60,
-            label: "shared_link_edit_expire_after_option_hour".tr(),
-          ),
+          DropdownMenuEntry(value: 60, label: "shared_link_edit_expire_after_option_hour".tr()),
           DropdownMenuEntry(
             value: 60 * 6,
-            label: "shared_link_edit_expire_after_option_hours"
-                .tr(namedArgs: {'count': "6"}),
+            label: "shared_link_edit_expire_after_option_hours".tr(namedArgs: {'count': "6"}),
           ),
-          DropdownMenuEntry(
-            value: 60 * 24,
-            label: "shared_link_edit_expire_after_option_day".tr(),
-          ),
+          DropdownMenuEntry(value: 60 * 24, label: "shared_link_edit_expire_after_option_day".tr()),
           DropdownMenuEntry(
             value: 60 * 24 * 7,
-            label: "shared_link_edit_expire_after_option_days"
-                .tr(namedArgs: {'count': "7"}),
+            label: "shared_link_edit_expire_after_option_days".tr(namedArgs: {'count': "7"}),
           ),
           DropdownMenuEntry(
             value: 60 * 24 * 30,
-            label: "shared_link_edit_expire_after_option_days"
-                .tr(namedArgs: {'count': "30"}),
+            label: "shared_link_edit_expire_after_option_days".tr(namedArgs: {'count': "30"}),
           ),
           DropdownMenuEntry(
             value: 60 * 24 * 30 * 3,
-            label: "shared_link_edit_expire_after_option_months"
-                .tr(namedArgs: {'count': "3"}),
+            label: "shared_link_edit_expire_after_option_months".tr(namedArgs: {'count': "3"}),
           ),
           DropdownMenuEntry(
             value: 60 * 24 * 30 * 12,
-            label: "shared_link_edit_expire_after_option_year"
-                .tr(namedArgs: {'count': "1"}),
+            label: "shared_link_edit_expire_after_option_year".tr(namedArgs: {'count': "1"}),
           ),
         ],
       );
@@ -287,9 +231,7 @@ class SharedLinkEditPage extends HookConsumerWidget {
           SnackBar(
             content: Text(
               "shared_link_clipboard_copied_massage",
-              style: context.textTheme.bodyLarge?.copyWith(
-                color: context.primaryColor,
-              ),
+              style: context.textTheme.bodyLarge?.copyWith(color: context.primaryColor),
             ).tr(),
             duration: const Duration(seconds: 2),
           ),
@@ -300,23 +242,14 @@ class SharedLinkEditPage extends HookConsumerWidget {
     Widget buildNewLinkField() {
       return Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(
-              top: 20,
-              bottom: 20,
-            ),
-            child: Divider(),
-          ),
+          const Padding(padding: EdgeInsets.only(top: 20, bottom: 20), child: Divider()),
           TextFormField(
             readOnly: true,
             initialValue: newShareLink.value,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               enabledBorder: themeData.inputDecorationTheme.focusedBorder,
-              suffixIcon: IconButton(
-                onPressed: copyLinkToClipboard,
-                icon: const Icon(Icons.copy),
-              ),
+              suffixIcon: IconButton(onPressed: copyLinkToClipboard, icon: const Icon(Icons.copy)),
             ),
           ),
           Padding(
@@ -327,13 +260,7 @@ class SharedLinkEditPage extends HookConsumerWidget {
                 onPressed: () {
                   context.maybePop();
                 },
-                child: const Text(
-                  "done",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ).tr(),
+                child: const Text("done", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)).tr(),
               ),
             ),
           ),
@@ -346,32 +273,34 @@ class SharedLinkEditPage extends HookConsumerWidget {
     }
 
     Future<void> handleNewLink() async {
-      final newLink =
-          await ref.read(sharedLinkServiceProvider).createSharedLink(
-                albumId: albumId,
-                assetIds: assetsList,
-                showMeta: showMetadata.value,
-                allowDownload: allowDownload.value,
-                allowUpload: allowUpload.value,
-                description: descriptionController.text.isEmpty
-                    ? null
-                    : descriptionController.text,
-                password: passwordController.text.isEmpty
-                    ? null
-                    : passwordController.text,
-                expiresAt: expiryAfter.value == 0 ? null : calculateExpiry(),
-              );
+      final newLink = await ref
+          .read(sharedLinkServiceProvider)
+          .createSharedLink(
+            albumId: albumId,
+            assetIds: assetsList,
+            showMeta: showMetadata.value,
+            allowDownload: allowDownload.value,
+            allowUpload: allowUpload.value,
+            description: descriptionController.text.isEmpty ? null : descriptionController.text,
+            password: passwordController.text.isEmpty ? null : passwordController.text,
+            slug: slugController.text.isEmpty ? null : slugController.text,
+            expiresAt: expiryAfter.value == 0 ? null : calculateExpiry(),
+          );
       ref.invalidate(sharedLinksStateProvider);
-      final externalDomain = ref.read(
-        serverInfoProvider.select((s) => s.serverConfig.externalDomain),
-      );
-      var serverUrl =
-          externalDomain.isNotEmpty ? externalDomain : getServerUrl();
+
+      await ref.read(serverInfoProvider.notifier).getServerConfig();
+      final externalDomain = ref.read(serverInfoProvider.select((s) => s.serverConfig.externalDomain));
+
+      var serverUrl = externalDomain.isNotEmpty ? externalDomain : getServerUrl();
       if (serverUrl != null && !serverUrl.endsWith('/')) {
         serverUrl += '/';
       }
+
       if (newLink != null && serverUrl != null) {
-        newShareLink.value = "${serverUrl}share/${newLink.key}";
+        final hasSlug = newLink.slug?.isNotEmpty == true;
+        final urlPath = hasSlug ? newLink.slug : newLink.key;
+        final basePath = hasSlug ? 's' : 'share';
+        newShareLink.value = "$serverUrl$basePath/$urlPath";
         copyLinkToClipboard();
       } else if (newLink == null) {
         ImmichToast.show(
@@ -389,6 +318,7 @@ class SharedLinkEditPage extends HookConsumerWidget {
       bool? meta;
       String? desc;
       String? password;
+      String? slug;
       DateTime? expiry;
       bool? changeExpiry;
 
@@ -412,30 +342,37 @@ class SharedLinkEditPage extends HookConsumerWidget {
         password = passwordController.text;
       }
 
+      if (slugController.text != (existingLink!.slug ?? "")) {
+        slug = slugController.text.isEmpty ? null : slugController.text;
+      } else {
+        slug = existingLink!.slug;
+      }
+
       if (editExpiry.value) {
         expiry = expiryAfter.value == 0 ? null : calculateExpiry();
         changeExpiry = true;
       }
 
-      await ref.read(sharedLinkServiceProvider).updateSharedLink(
+      await ref
+          .read(sharedLinkServiceProvider)
+          .updateSharedLink(
             existingLink!.id,
             showMeta: meta,
             allowDownload: download,
             allowUpload: upload,
             description: desc,
             password: password,
+            slug: slug,
             expiresAt: expiry,
             changeExpiry: changeExpiry,
           );
       ref.invalidate(sharedLinksStateProvider);
-      context.maybePop();
+      await context.maybePop();
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          existingLink == null ? "create_link_to_share" : "edit_link",
-        ).tr(),
+        title: Text(existingLink == null ? "create_link_to_share" : "edit_link").tr(),
         elevation: 0,
         leading: const CloseButton(),
         centerTitle: false,
@@ -443,86 +380,48 @@ class SharedLinkEditPage extends HookConsumerWidget {
       body: SafeArea(
         child: ListView(
           children: [
+            Padding(padding: const EdgeInsets.all(padding), child: buildLinkTitle()),
+            Padding(padding: const EdgeInsets.all(padding), child: buildDescriptionField()),
+            Padding(padding: const EdgeInsets.all(padding), child: buildPasswordField()),
+            Padding(padding: const EdgeInsets.all(padding), child: buildSlugField()),
             Padding(
-              padding: const EdgeInsets.all(padding),
-              child: buildLinkTitle(),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(padding),
-              child: buildDescriptionField(),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(padding),
-              child: buildPasswordField(),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                left: padding,
-                right: padding,
-                bottom: padding,
-              ),
+              padding: const EdgeInsets.only(left: padding, right: padding, bottom: padding),
               child: buildShowMetaButton(),
             ),
             Padding(
-              padding: const EdgeInsets.only(
-                left: padding,
-                right: padding,
-                bottom: padding,
-              ),
+              padding: const EdgeInsets.only(left: padding, right: padding, bottom: padding),
               child: buildAllowDownloadButton(),
             ),
             Padding(
-              padding:
-                  const EdgeInsets.only(left: padding, right: 20, bottom: 20),
+              padding: const EdgeInsets.only(left: padding, right: 20, bottom: 20),
               child: buildAllowUploadButton(),
             ),
             if (existingLink != null)
               Padding(
-                padding: const EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  bottom: padding,
-                ),
+                padding: const EdgeInsets.only(left: padding, right: padding, bottom: padding),
                 child: buildEditExpiryButton(),
               ),
             Padding(
-              padding: const EdgeInsets.only(
-                left: padding,
-                right: padding,
-                bottom: padding,
-              ),
+              padding: const EdgeInsets.only(left: padding, right: padding, bottom: padding),
               child: buildExpiryAfterButton(),
             ),
             if (newShareLink.value.isEmpty)
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    right: padding + 10,
-                    bottom: padding,
-                  ),
+                  padding: const EdgeInsets.only(right: padding + 10, bottom: padding),
                   child: ElevatedButton(
-                    onPressed:
-                        existingLink != null ? handleEditLink : handleNewLink,
+                    onPressed: existingLink != null ? handleEditLink : handleNewLink,
                     child: Text(
-                      existingLink != null
-                          ? "shared_link_edit_submit_button"
-                          : "create_link",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      existingLink != null ? "shared_link_edit_submit_button" : "create_link",
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ).tr(),
                   ),
                 ),
               ),
             if (newShareLink.value.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  bottom: padding,
-                ),
+                padding: const EdgeInsets.only(left: padding, right: padding, bottom: padding),
                 child: buildNewLinkField(),
               ),
           ],

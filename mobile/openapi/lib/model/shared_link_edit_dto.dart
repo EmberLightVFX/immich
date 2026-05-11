@@ -20,8 +20,10 @@ class SharedLinkEditDto {
     this.expiresAt,
     this.password,
     this.showMetadata,
+    this.slug,
   });
 
+  /// Allow downloads
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -30,6 +32,7 @@ class SharedLinkEditDto {
   ///
   bool? allowDownload;
 
+  /// Allow uploads
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -38,7 +41,7 @@ class SharedLinkEditDto {
   ///
   bool? allowUpload;
 
-  /// Few clients cannot send null to set the expiryTime to never. Setting this flag and not sending expiryAt is considered as null instead. Clients that can send null values can ignore this.
+  /// Whether to change the expiry time. Few clients cannot send null to set the expiryTime to never. Setting this flag and not sending expiryAt is considered as null instead. Clients that can send null values can ignore this.
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -47,24 +50,16 @@ class SharedLinkEditDto {
   ///
   bool? changeExpiryTime;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
+  /// Link description
   String? description;
 
+  /// Expiration date
   DateTime? expiresAt;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
+  /// Link password
   String? password;
 
+  /// Show metadata
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -72,6 +67,9 @@ class SharedLinkEditDto {
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
   bool? showMetadata;
+
+  /// Custom URL slug
+  String? slug;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SharedLinkEditDto &&
@@ -81,7 +79,8 @@ class SharedLinkEditDto {
     other.description == description &&
     other.expiresAt == expiresAt &&
     other.password == password &&
-    other.showMetadata == showMetadata;
+    other.showMetadata == showMetadata &&
+    other.slug == slug;
 
   @override
   int get hashCode =>
@@ -92,10 +91,11 @@ class SharedLinkEditDto {
     (description == null ? 0 : description!.hashCode) +
     (expiresAt == null ? 0 : expiresAt!.hashCode) +
     (password == null ? 0 : password!.hashCode) +
-    (showMetadata == null ? 0 : showMetadata!.hashCode);
+    (showMetadata == null ? 0 : showMetadata!.hashCode) +
+    (slug == null ? 0 : slug!.hashCode);
 
   @override
-  String toString() => 'SharedLinkEditDto[allowDownload=$allowDownload, allowUpload=$allowUpload, changeExpiryTime=$changeExpiryTime, description=$description, expiresAt=$expiresAt, password=$password, showMetadata=$showMetadata]';
+  String toString() => 'SharedLinkEditDto[allowDownload=$allowDownload, allowUpload=$allowUpload, changeExpiryTime=$changeExpiryTime, description=$description, expiresAt=$expiresAt, password=$password, showMetadata=$showMetadata, slug=$slug]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -120,7 +120,9 @@ class SharedLinkEditDto {
     //  json[r'description'] = null;
     }
     if (this.expiresAt != null) {
-      json[r'expiresAt'] = this.expiresAt!.toUtc().toIso8601String();
+      json[r'expiresAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.expiresAt!.millisecondsSinceEpoch
+        : this.expiresAt!.toUtc().toIso8601String();
     } else {
     //  json[r'expiresAt'] = null;
     }
@@ -133,6 +135,11 @@ class SharedLinkEditDto {
       json[r'showMetadata'] = this.showMetadata;
     } else {
     //  json[r'showMetadata'] = null;
+    }
+    if (this.slug != null) {
+      json[r'slug'] = this.slug;
+    } else {
+    //  json[r'slug'] = null;
     }
     return json;
   }
@@ -150,9 +157,10 @@ class SharedLinkEditDto {
         allowUpload: mapValueOfType<bool>(json, r'allowUpload'),
         changeExpiryTime: mapValueOfType<bool>(json, r'changeExpiryTime'),
         description: mapValueOfType<String>(json, r'description'),
-        expiresAt: mapDateTime(json, r'expiresAt', r''),
+        expiresAt: mapDateTime(json, r'expiresAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/'),
         password: mapValueOfType<String>(json, r'password'),
         showMetadata: mapValueOfType<bool>(json, r'showMetadata'),
+        slug: mapValueOfType<String>(json, r'slug'),
       );
     }
     return null;

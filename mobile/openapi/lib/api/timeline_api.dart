@@ -16,37 +16,57 @@ class TimelineApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'GET /timeline/bucket' operation and returns the [Response].
+  /// Get time bucket
+  ///
+  /// Retrieve a string of all asset ids in a given time bucket.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] timeBucket (required):
+  ///   Time bucket identifier in YYYY-MM-DD format
   ///
   /// * [String] albumId:
+  ///   Filter assets belonging to a specific album
+  ///
+  /// * [String] bbox:
+  ///   Bounding box coordinates as west,south,east,north (WGS84)
   ///
   /// * [bool] isFavorite:
+  ///   Filter by favorite status (true for favorites only, false for non-favorites only)
   ///
   /// * [bool] isTrashed:
+  ///   Filter by trash status (true for trashed assets only, false for non-trashed only)
   ///
   /// * [String] key:
   ///
   /// * [AssetOrder] order:
-  ///
-  /// * [num] page:
-  ///
-  /// * [num] pageSize:
+  ///   Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)
   ///
   /// * [String] personId:
+  ///   Filter assets containing a specific person (face recognition)
+  ///
+  /// * [String] slug:
   ///
   /// * [String] tagId:
+  ///   Filter assets with a specific tag
   ///
   /// * [String] userId:
+  ///   Filter assets by specific user ID
   ///
   /// * [AssetVisibility] visibility:
+  ///   Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)
+  ///
+  /// * [bool] withCoordinates:
+  ///   Include location data in the response
   ///
   /// * [bool] withPartners:
+  ///   Include assets shared by partners
   ///
   /// * [bool] withStacked:
-  Future<Response> getTimeBucketWithHttpInfo(String timeBucket, { String? albumId, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, num? page, num? pageSize, String? personId, String? tagId, String? userId, AssetVisibility? visibility, bool? withPartners, bool? withStacked, }) async {
+  ///   Include stacked assets in the response. When true, only primary assets from stacks are returned.
+  Future<Response> getTimeBucketWithHttpInfo(String timeBucket, { String? albumId, String? bbox, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? slug, String? tagId, String? userId, AssetVisibility? visibility, bool? withCoordinates, bool? withPartners, bool? withStacked, }) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/timeline/bucket';
 
@@ -60,6 +80,9 @@ class TimelineApi {
     if (albumId != null) {
       queryParams.addAll(_queryParams('', 'albumId', albumId));
     }
+    if (bbox != null) {
+      queryParams.addAll(_queryParams('', 'bbox', bbox));
+    }
     if (isFavorite != null) {
       queryParams.addAll(_queryParams('', 'isFavorite', isFavorite));
     }
@@ -72,14 +95,11 @@ class TimelineApi {
     if (order != null) {
       queryParams.addAll(_queryParams('', 'order', order));
     }
-    if (page != null) {
-      queryParams.addAll(_queryParams('', 'page', page));
-    }
-    if (pageSize != null) {
-      queryParams.addAll(_queryParams('', 'pageSize', pageSize));
-    }
     if (personId != null) {
       queryParams.addAll(_queryParams('', 'personId', personId));
+    }
+    if (slug != null) {
+      queryParams.addAll(_queryParams('', 'slug', slug));
     }
     if (tagId != null) {
       queryParams.addAll(_queryParams('', 'tagId', tagId));
@@ -90,6 +110,9 @@ class TimelineApi {
     }
     if (visibility != null) {
       queryParams.addAll(_queryParams('', 'visibility', visibility));
+    }
+    if (withCoordinates != null) {
+      queryParams.addAll(_queryParams('', 'withCoordinates', withCoordinates));
     }
     if (withPartners != null) {
       queryParams.addAll(_queryParams('', 'withPartners', withPartners));
@@ -112,37 +135,56 @@ class TimelineApi {
     );
   }
 
+  /// Get time bucket
+  ///
+  /// Retrieve a string of all asset ids in a given time bucket.
+  ///
   /// Parameters:
   ///
   /// * [String] timeBucket (required):
+  ///   Time bucket identifier in YYYY-MM-DD format
   ///
   /// * [String] albumId:
+  ///   Filter assets belonging to a specific album
+  ///
+  /// * [String] bbox:
+  ///   Bounding box coordinates as west,south,east,north (WGS84)
   ///
   /// * [bool] isFavorite:
+  ///   Filter by favorite status (true for favorites only, false for non-favorites only)
   ///
   /// * [bool] isTrashed:
+  ///   Filter by trash status (true for trashed assets only, false for non-trashed only)
   ///
   /// * [String] key:
   ///
   /// * [AssetOrder] order:
-  ///
-  /// * [num] page:
-  ///
-  /// * [num] pageSize:
+  ///   Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)
   ///
   /// * [String] personId:
+  ///   Filter assets containing a specific person (face recognition)
+  ///
+  /// * [String] slug:
   ///
   /// * [String] tagId:
+  ///   Filter assets with a specific tag
   ///
   /// * [String] userId:
+  ///   Filter assets by specific user ID
   ///
   /// * [AssetVisibility] visibility:
+  ///   Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)
+  ///
+  /// * [bool] withCoordinates:
+  ///   Include location data in the response
   ///
   /// * [bool] withPartners:
+  ///   Include assets shared by partners
   ///
   /// * [bool] withStacked:
-  Future<TimeBucketAssetResponseDto?> getTimeBucket(String timeBucket, { String? albumId, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, num? page, num? pageSize, String? personId, String? tagId, String? userId, AssetVisibility? visibility, bool? withPartners, bool? withStacked, }) async {
-    final response = await getTimeBucketWithHttpInfo(timeBucket,  albumId: albumId, isFavorite: isFavorite, isTrashed: isTrashed, key: key, order: order, page: page, pageSize: pageSize, personId: personId, tagId: tagId, userId: userId, visibility: visibility, withPartners: withPartners, withStacked: withStacked, );
+  ///   Include stacked assets in the response. When true, only primary assets from stacks are returned.
+  Future<TimeBucketAssetResponseDto?> getTimeBucket(String timeBucket, { String? albumId, String? bbox, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? slug, String? tagId, String? userId, AssetVisibility? visibility, bool? withCoordinates, bool? withPartners, bool? withStacked, }) async {
+    final response = await getTimeBucketWithHttpInfo(timeBucket,  albumId: albumId, bbox: bbox, isFavorite: isFavorite, isTrashed: isTrashed, key: key, order: order, personId: personId, slug: slug, tagId: tagId, userId: userId, visibility: visibility, withCoordinates: withCoordinates, withPartners: withPartners, withStacked: withStacked, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -156,31 +198,54 @@ class TimelineApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /timeline/buckets' operation and returns the [Response].
+  /// Get time buckets
+  ///
+  /// Retrieve a list of all minimal time buckets.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] albumId:
+  ///   Filter assets belonging to a specific album
+  ///
+  /// * [String] bbox:
+  ///   Bounding box coordinates as west,south,east,north (WGS84)
   ///
   /// * [bool] isFavorite:
+  ///   Filter by favorite status (true for favorites only, false for non-favorites only)
   ///
   /// * [bool] isTrashed:
+  ///   Filter by trash status (true for trashed assets only, false for non-trashed only)
   ///
   /// * [String] key:
   ///
   /// * [AssetOrder] order:
+  ///   Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)
   ///
   /// * [String] personId:
+  ///   Filter assets containing a specific person (face recognition)
+  ///
+  /// * [String] slug:
   ///
   /// * [String] tagId:
+  ///   Filter assets with a specific tag
   ///
   /// * [String] userId:
+  ///   Filter assets by specific user ID
   ///
   /// * [AssetVisibility] visibility:
+  ///   Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)
+  ///
+  /// * [bool] withCoordinates:
+  ///   Include location data in the response
   ///
   /// * [bool] withPartners:
+  ///   Include assets shared by partners
   ///
   /// * [bool] withStacked:
-  Future<Response> getTimeBucketsWithHttpInfo({ String? albumId, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? tagId, String? userId, AssetVisibility? visibility, bool? withPartners, bool? withStacked, }) async {
+  ///   Include stacked assets in the response. When true, only primary assets from stacks are returned.
+  Future<Response> getTimeBucketsWithHttpInfo({ String? albumId, String? bbox, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? slug, String? tagId, String? userId, AssetVisibility? visibility, bool? withCoordinates, bool? withPartners, bool? withStacked, }) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/timeline/buckets';
 
@@ -193,6 +258,9 @@ class TimelineApi {
 
     if (albumId != null) {
       queryParams.addAll(_queryParams('', 'albumId', albumId));
+    }
+    if (bbox != null) {
+      queryParams.addAll(_queryParams('', 'bbox', bbox));
     }
     if (isFavorite != null) {
       queryParams.addAll(_queryParams('', 'isFavorite', isFavorite));
@@ -209,6 +277,9 @@ class TimelineApi {
     if (personId != null) {
       queryParams.addAll(_queryParams('', 'personId', personId));
     }
+    if (slug != null) {
+      queryParams.addAll(_queryParams('', 'slug', slug));
+    }
     if (tagId != null) {
       queryParams.addAll(_queryParams('', 'tagId', tagId));
     }
@@ -217,6 +288,9 @@ class TimelineApi {
     }
     if (visibility != null) {
       queryParams.addAll(_queryParams('', 'visibility', visibility));
+    }
+    if (withCoordinates != null) {
+      queryParams.addAll(_queryParams('', 'withCoordinates', withCoordinates));
     }
     if (withPartners != null) {
       queryParams.addAll(_queryParams('', 'withPartners', withPartners));
@@ -239,31 +313,53 @@ class TimelineApi {
     );
   }
 
+  /// Get time buckets
+  ///
+  /// Retrieve a list of all minimal time buckets.
+  ///
   /// Parameters:
   ///
   /// * [String] albumId:
+  ///   Filter assets belonging to a specific album
+  ///
+  /// * [String] bbox:
+  ///   Bounding box coordinates as west,south,east,north (WGS84)
   ///
   /// * [bool] isFavorite:
+  ///   Filter by favorite status (true for favorites only, false for non-favorites only)
   ///
   /// * [bool] isTrashed:
+  ///   Filter by trash status (true for trashed assets only, false for non-trashed only)
   ///
   /// * [String] key:
   ///
   /// * [AssetOrder] order:
+  ///   Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)
   ///
   /// * [String] personId:
+  ///   Filter assets containing a specific person (face recognition)
+  ///
+  /// * [String] slug:
   ///
   /// * [String] tagId:
+  ///   Filter assets with a specific tag
   ///
   /// * [String] userId:
+  ///   Filter assets by specific user ID
   ///
   /// * [AssetVisibility] visibility:
+  ///   Filter by asset visibility status (ARCHIVE, TIMELINE, HIDDEN, LOCKED)
+  ///
+  /// * [bool] withCoordinates:
+  ///   Include location data in the response
   ///
   /// * [bool] withPartners:
+  ///   Include assets shared by partners
   ///
   /// * [bool] withStacked:
-  Future<List<TimeBucketsResponseDto>?> getTimeBuckets({ String? albumId, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? tagId, String? userId, AssetVisibility? visibility, bool? withPartners, bool? withStacked, }) async {
-    final response = await getTimeBucketsWithHttpInfo( albumId: albumId, isFavorite: isFavorite, isTrashed: isTrashed, key: key, order: order, personId: personId, tagId: tagId, userId: userId, visibility: visibility, withPartners: withPartners, withStacked: withStacked, );
+  ///   Include stacked assets in the response. When true, only primary assets from stacks are returned.
+  Future<List<TimeBucketsResponseDto>?> getTimeBuckets({ String? albumId, String? bbox, bool? isFavorite, bool? isTrashed, String? key, AssetOrder? order, String? personId, String? slug, String? tagId, String? userId, AssetVisibility? visibility, bool? withCoordinates, bool? withPartners, bool? withStacked, }) async {
+    final response = await getTimeBucketsWithHttpInfo( albumId: albumId, bbox: bbox, isFavorite: isFavorite, isTrashed: isTrashed, key: key, order: order, personId: personId, slug: slug, tagId: tagId, userId: userId, visibility: visibility, withCoordinates: withCoordinates, withPartners: withPartners, withStacked: withStacked, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }

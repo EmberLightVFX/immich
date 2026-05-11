@@ -16,7 +16,12 @@ class SyncApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'DELETE /sync/ack' operation and returns the [Response].
+  /// Delete acknowledgements
+  ///
+  /// Delete specific synchronization acknowledgments.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [SyncAckDeleteDto] syncAckDeleteDto (required):
@@ -45,6 +50,10 @@ class SyncApi {
     );
   }
 
+  /// Delete acknowledgements
+  ///
+  /// Delete specific synchronization acknowledgments.
+  ///
   /// Parameters:
   ///
   /// * [SyncAckDeleteDto] syncAckDeleteDto (required):
@@ -55,104 +64,11 @@ class SyncApi {
     }
   }
 
-  /// Performs an HTTP 'POST /sync/delta-sync' operation and returns the [Response].
-  /// Parameters:
+  /// Retrieve acknowledgements
   ///
-  /// * [AssetDeltaSyncDto] assetDeltaSyncDto (required):
-  Future<Response> getDeltaSyncWithHttpInfo(AssetDeltaSyncDto assetDeltaSyncDto,) async {
-    // ignore: prefer_const_declarations
-    final apiPath = r'/sync/delta-sync';
-
-    // ignore: prefer_final_locals
-    Object? postBody = assetDeltaSyncDto;
-
-    final queryParams = <QueryParam>[];
-    final headerParams = <String, String>{};
-    final formParams = <String, String>{};
-
-    const contentTypes = <String>['application/json'];
-
-
-    return apiClient.invokeAPI(
-      apiPath,
-      'POST',
-      queryParams,
-      postBody,
-      headerParams,
-      formParams,
-      contentTypes.isEmpty ? null : contentTypes.first,
-    );
-  }
-
-  /// Parameters:
+  /// Retrieve the synchronization acknowledgments for the current session.
   ///
-  /// * [AssetDeltaSyncDto] assetDeltaSyncDto (required):
-  Future<AssetDeltaSyncResponseDto?> getDeltaSync(AssetDeltaSyncDto assetDeltaSyncDto,) async {
-    final response = await getDeltaSyncWithHttpInfo(assetDeltaSyncDto,);
-    if (response.statusCode >= HttpStatus.badRequest) {
-      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
-    }
-    // When a remote server returns no body with a status of 204, we shall not decode it.
-    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
-    // FormatException when trying to decode an empty string.
-    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'AssetDeltaSyncResponseDto',) as AssetDeltaSyncResponseDto;
-    
-    }
-    return null;
-  }
-
-  /// Performs an HTTP 'POST /sync/full-sync' operation and returns the [Response].
-  /// Parameters:
-  ///
-  /// * [AssetFullSyncDto] assetFullSyncDto (required):
-  Future<Response> getFullSyncForUserWithHttpInfo(AssetFullSyncDto assetFullSyncDto,) async {
-    // ignore: prefer_const_declarations
-    final apiPath = r'/sync/full-sync';
-
-    // ignore: prefer_final_locals
-    Object? postBody = assetFullSyncDto;
-
-    final queryParams = <QueryParam>[];
-    final headerParams = <String, String>{};
-    final formParams = <String, String>{};
-
-    const contentTypes = <String>['application/json'];
-
-
-    return apiClient.invokeAPI(
-      apiPath,
-      'POST',
-      queryParams,
-      postBody,
-      headerParams,
-      formParams,
-      contentTypes.isEmpty ? null : contentTypes.first,
-    );
-  }
-
-  /// Parameters:
-  ///
-  /// * [AssetFullSyncDto] assetFullSyncDto (required):
-  Future<List<AssetResponseDto>?> getFullSyncForUser(AssetFullSyncDto assetFullSyncDto,) async {
-    final response = await getFullSyncForUserWithHttpInfo(assetFullSyncDto,);
-    if (response.statusCode >= HttpStatus.badRequest) {
-      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
-    }
-    // When a remote server returns no body with a status of 204, we shall not decode it.
-    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
-    // FormatException when trying to decode an empty string.
-    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      final responseBody = await _decodeBodyBytes(response);
-      return (await apiClient.deserializeAsync(responseBody, 'List<AssetResponseDto>') as List)
-        .cast<AssetResponseDto>()
-        .toList(growable: false);
-
-    }
-    return null;
-  }
-
-  /// Performs an HTTP 'GET /sync/ack' operation and returns the [Response].
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getSyncAckWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/sync/ack';
@@ -178,6 +94,9 @@ class SyncApi {
     );
   }
 
+  /// Retrieve acknowledgements
+  ///
+  /// Retrieve the synchronization acknowledgments for the current session.
   Future<List<SyncAckDto>?> getSyncAck() async {
     final response = await getSyncAckWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -196,7 +115,12 @@ class SyncApi {
     return null;
   }
 
-  /// Performs an HTTP 'POST /sync/stream' operation and returns the [Response].
+  /// Stream sync changes
+  ///
+  /// Retrieve a JSON lines streamed response of changes for synchronization. This endpoint is used by the mobile app to efficiently stay up to date with changes.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [SyncStreamDto] syncStreamDto (required):
@@ -225,6 +149,10 @@ class SyncApi {
     );
   }
 
+  /// Stream sync changes
+  ///
+  /// Retrieve a JSON lines streamed response of changes for synchronization. This endpoint is used by the mobile app to efficiently stay up to date with changes.
+  ///
   /// Parameters:
   ///
   /// * [SyncStreamDto] syncStreamDto (required):
@@ -235,7 +163,12 @@ class SyncApi {
     }
   }
 
-  /// Performs an HTTP 'POST /sync/ack' operation and returns the [Response].
+  /// Acknowledge changes
+  ///
+  /// Send a list of synchronization acknowledgements to confirm that the latest changes have been received.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [SyncAckSetDto] syncAckSetDto (required):
@@ -264,6 +197,10 @@ class SyncApi {
     );
   }
 
+  /// Acknowledge changes
+  ///
+  /// Send a list of synchronization acknowledgements to confirm that the latest changes have been received.
+  ///
   /// Parameters:
   ///
   /// * [SyncAckSetDto] syncAckSetDto (required):

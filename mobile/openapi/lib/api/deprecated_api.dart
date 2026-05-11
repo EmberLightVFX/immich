@@ -16,16 +16,19 @@ class DeprecatedApi {
 
   final ApiClient apiClient;
 
-  /// This property was deprecated in v1.116.0
+  /// Create a partner
+  ///
+  /// Create a new partner to share assets with.
   ///
   /// Note: This method returns the HTTP [Response].
   ///
   /// Parameters:
   ///
-  /// * [num] count:
-  Future<Response> getRandomWithHttpInfo({ num? count, }) async {
+  /// * [String] id (required):
+  Future<Response> createPartnerDeprecatedWithHttpInfo(String id,) async {
     // ignore: prefer_const_declarations
-    final apiPath = r'/assets/random';
+    final apiPath = r'/partners/{id}'
+      .replaceAll('{id}', id);
 
     // ignore: prefer_final_locals
     Object? postBody;
@@ -34,9 +37,57 @@ class DeprecatedApi {
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
 
-    if (count != null) {
-      queryParams.addAll(_queryParams('', 'count', count));
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Create a partner
+  ///
+  /// Create a new partner to share assets with.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  Future<PartnerResponseDto?> createPartnerDeprecated(String id,) async {
+    final response = await createPartnerDeprecatedWithHttpInfo(id,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PartnerResponseDto',) as PartnerResponseDto;
+    
+    }
+    return null;
+  }
+
+  /// Retrieve queue counts and status
+  ///
+  /// Retrieve the counts of the current queue, as well as the current status.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  Future<Response> getQueuesLegacyWithHttpInfo() async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/jobs';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
 
     const contentTypes = <String>[];
 
@@ -52,13 +103,11 @@ class DeprecatedApi {
     );
   }
 
-  /// This property was deprecated in v1.116.0
+  /// Retrieve queue counts and status
   ///
-  /// Parameters:
-  ///
-  /// * [num] count:
-  Future<List<AssetResponseDto>?> getRandom({ num? count, }) async {
-    final response = await getRandomWithHttpInfo( count: count, );
+  /// Retrieve the counts of the current queue, as well as the current status.
+  Future<QueuesResponseLegacyDto?> getQueuesLegacy() async {
+    final response = await getQueuesLegacyWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -66,11 +115,69 @@ class DeprecatedApi {
     // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      final responseBody = await _decodeBodyBytes(response);
-      return (await apiClient.deserializeAsync(responseBody, 'List<AssetResponseDto>') as List)
-        .cast<AssetResponseDto>()
-        .toList(growable: false);
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'QueuesResponseLegacyDto',) as QueuesResponseLegacyDto;
+    
+    }
+    return null;
+  }
 
+  /// Run jobs
+  ///
+  /// Queue all assets for a specific job type. Defaults to only queueing assets that have not yet been processed, but the force command can be used to re-process all assets.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [QueueName] name (required):
+  ///
+  /// * [QueueCommandDto] queueCommandDto (required):
+  Future<Response> runQueueCommandLegacyWithHttpInfo(QueueName name, QueueCommandDto queueCommandDto,) async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/jobs/{name}'
+      .replaceAll('{name}', name.toString());
+
+    // ignore: prefer_final_locals
+    Object? postBody = queueCommandDto;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Run jobs
+  ///
+  /// Queue all assets for a specific job type. Defaults to only queueing assets that have not yet been processed, but the force command can be used to re-process all assets.
+  ///
+  /// Parameters:
+  ///
+  /// * [QueueName] name (required):
+  ///
+  /// * [QueueCommandDto] queueCommandDto (required):
+  Future<QueueResponseLegacyDto?> runQueueCommandLegacy(QueueName name, QueueCommandDto queueCommandDto,) async {
+    final response = await runQueueCommandLegacyWithHttpInfo(name, queueCommandDto,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'QueueResponseLegacyDto',) as QueueResponseLegacyDto;
+    
     }
     return null;
   }

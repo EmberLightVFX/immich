@@ -16,7 +16,11 @@ class SystemMetadataApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'GET /system-metadata/admin-onboarding' operation and returns the [Response].
+  /// Retrieve admin onboarding
+  ///
+  /// Retrieve the current admin onboarding status.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getAdminOnboardingWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/system-metadata/admin-onboarding';
@@ -42,6 +46,9 @@ class SystemMetadataApi {
     );
   }
 
+  /// Retrieve admin onboarding
+  ///
+  /// Retrieve the current admin onboarding status.
   Future<AdminOnboardingUpdateDto?> getAdminOnboarding() async {
     final response = await getAdminOnboardingWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -57,7 +64,11 @@ class SystemMetadataApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /system-metadata/reverse-geocoding-state' operation and returns the [Response].
+  /// Retrieve reverse geocoding state
+  ///
+  /// Retrieve the current state of the reverse geocoding import.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getReverseGeocodingStateWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/system-metadata/reverse-geocoding-state';
@@ -83,6 +94,9 @@ class SystemMetadataApi {
     );
   }
 
+  /// Retrieve reverse geocoding state
+  ///
+  /// Retrieve the current state of the reverse geocoding import.
   Future<ReverseGeocodingStateResponseDto?> getReverseGeocodingState() async {
     final response = await getReverseGeocodingStateWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -98,7 +112,11 @@ class SystemMetadataApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /system-metadata/version-check-state' operation and returns the [Response].
+  /// Retrieve version check state
+  ///
+  /// Retrieve the current state of the version check process.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getVersionCheckStateWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/system-metadata/version-check-state';
@@ -124,6 +142,9 @@ class SystemMetadataApi {
     );
   }
 
+  /// Retrieve version check state
+  ///
+  /// Retrieve the current state of the version check process.
   Future<VersionCheckStateResponseDto?> getVersionCheckState() async {
     final response = await getVersionCheckStateWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -139,7 +160,12 @@ class SystemMetadataApi {
     return null;
   }
 
-  /// Performs an HTTP 'POST /system-metadata/admin-onboarding' operation and returns the [Response].
+  /// Update admin onboarding
+  ///
+  /// Update the admin onboarding status.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [AdminOnboardingUpdateDto] adminOnboardingUpdateDto (required):
@@ -168,6 +194,10 @@ class SystemMetadataApi {
     );
   }
 
+  /// Update admin onboarding
+  ///
+  /// Update the admin onboarding status.
+  ///
   /// Parameters:
   ///
   /// * [AdminOnboardingUpdateDto] adminOnboardingUpdateDto (required):

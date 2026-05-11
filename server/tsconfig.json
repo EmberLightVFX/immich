@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "node16",
+    "module": "node20",
     "strict": true,
     "declaration": true,
     "removeComments": true,
@@ -17,10 +17,16 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "preserveWatchOutput": true,
-    "baseUrl": "./",
+    "paths": {
+      "src/*": ["./src/*"],
+      "test/*": ["./test/*"]
+    },
+    "rootDir": ".",
     "jsx": "react",
     "types": ["vitest/globals"],
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "noErrorTruncation": true
   },
+  "include": ["src", "test"],
   "exclude": ["dist", "node_modules", "upload"]
 }

@@ -21,9 +21,11 @@ class SharedLinkCreateDto {
     this.expiresAt,
     this.password,
     this.showMetadata = true,
+    this.slug,
     required this.type,
   });
 
+  /// Album ID (for album sharing)
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -32,8 +34,10 @@ class SharedLinkCreateDto {
   ///
   String? albumId;
 
+  /// Allow downloads
   bool allowDownload;
 
+  /// Allow uploads
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -42,27 +46,23 @@ class SharedLinkCreateDto {
   ///
   bool? allowUpload;
 
+  /// Asset IDs (for individual assets)
   List<String> assetIds;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
+  /// Link description
   String? description;
 
+  /// Expiration date
   DateTime? expiresAt;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
+  /// Link password
   String? password;
 
+  /// Show metadata
   bool showMetadata;
+
+  /// Custom URL slug
+  String? slug;
 
   SharedLinkType type;
 
@@ -76,6 +76,7 @@ class SharedLinkCreateDto {
     other.expiresAt == expiresAt &&
     other.password == password &&
     other.showMetadata == showMetadata &&
+    other.slug == slug &&
     other.type == type;
 
   @override
@@ -89,10 +90,11 @@ class SharedLinkCreateDto {
     (expiresAt == null ? 0 : expiresAt!.hashCode) +
     (password == null ? 0 : password!.hashCode) +
     (showMetadata.hashCode) +
+    (slug == null ? 0 : slug!.hashCode) +
     (type.hashCode);
 
   @override
-  String toString() => 'SharedLinkCreateDto[albumId=$albumId, allowDownload=$allowDownload, allowUpload=$allowUpload, assetIds=$assetIds, description=$description, expiresAt=$expiresAt, password=$password, showMetadata=$showMetadata, type=$type]';
+  String toString() => 'SharedLinkCreateDto[albumId=$albumId, allowDownload=$allowDownload, allowUpload=$allowUpload, assetIds=$assetIds, description=$description, expiresAt=$expiresAt, password=$password, showMetadata=$showMetadata, slug=$slug, type=$type]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -114,7 +116,9 @@ class SharedLinkCreateDto {
     //  json[r'description'] = null;
     }
     if (this.expiresAt != null) {
-      json[r'expiresAt'] = this.expiresAt!.toUtc().toIso8601String();
+      json[r'expiresAt'] = _isEpochMarker(r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/')
+        ? this.expiresAt!.millisecondsSinceEpoch
+        : this.expiresAt!.toUtc().toIso8601String();
     } else {
     //  json[r'expiresAt'] = null;
     }
@@ -124,6 +128,11 @@ class SharedLinkCreateDto {
     //  json[r'password'] = null;
     }
       json[r'showMetadata'] = this.showMetadata;
+    if (this.slug != null) {
+      json[r'slug'] = this.slug;
+    } else {
+    //  json[r'slug'] = null;
+    }
       json[r'type'] = this.type;
     return json;
   }
@@ -144,9 +153,10 @@ class SharedLinkCreateDto {
             ? (json[r'assetIds'] as Iterable).cast<String>().toList(growable: false)
             : const [],
         description: mapValueOfType<String>(json, r'description'),
-        expiresAt: mapDateTime(json, r'expiresAt', r''),
+        expiresAt: mapDateTime(json, r'expiresAt', r'/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/'),
         password: mapValueOfType<String>(json, r'password'),
         showMetadata: mapValueOfType<bool>(json, r'showMetadata') ?? true,
+        slug: mapValueOfType<String>(json, r'slug'),
         type: SharedLinkType.fromJson(json[r'type'])!,
       );
     }

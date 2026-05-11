@@ -16,7 +16,12 @@ class NotificationsApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'DELETE /notifications/{id}' operation and returns the [Response].
+  /// Delete a notification
+  ///
+  /// Delete a specific notification.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -46,6 +51,10 @@ class NotificationsApi {
     );
   }
 
+  /// Delete a notification
+  ///
+  /// Delete a specific notification.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -56,7 +65,12 @@ class NotificationsApi {
     }
   }
 
-  /// Performs an HTTP 'DELETE /notifications' operation and returns the [Response].
+  /// Delete notifications
+  ///
+  /// Delete a list of notifications at once.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [NotificationDeleteAllDto] notificationDeleteAllDto (required):
@@ -85,6 +99,10 @@ class NotificationsApi {
     );
   }
 
+  /// Delete notifications
+  ///
+  /// Delete a list of notifications at once.
+  ///
   /// Parameters:
   ///
   /// * [NotificationDeleteAllDto] notificationDeleteAllDto (required):
@@ -95,7 +113,12 @@ class NotificationsApi {
     }
   }
 
-  /// Performs an HTTP 'GET /notifications/{id}' operation and returns the [Response].
+  /// Get a notification
+  ///
+  /// Retrieve a specific notification identified by id.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -125,6 +148,10 @@ class NotificationsApi {
     );
   }
 
+  /// Get a notification
+  ///
+  /// Retrieve a specific notification identified by id.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -143,16 +170,23 @@ class NotificationsApi {
     return null;
   }
 
-  /// Performs an HTTP 'GET /notifications' operation and returns the [Response].
+  /// Retrieve notifications
+  ///
+  /// Retrieve a list of notifications.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id:
+  ///   Filter by notification ID
   ///
   /// * [NotificationLevel] level:
   ///
   /// * [NotificationType] type:
   ///
   /// * [bool] unread:
+  ///   Filter by unread status
   Future<Response> getNotificationsWithHttpInfo({ String? id, NotificationLevel? level, NotificationType? type, bool? unread, }) async {
     // ignore: prefer_const_declarations
     final apiPath = r'/notifications';
@@ -191,15 +225,21 @@ class NotificationsApi {
     );
   }
 
+  /// Retrieve notifications
+  ///
+  /// Retrieve a list of notifications.
+  ///
   /// Parameters:
   ///
   /// * [String] id:
+  ///   Filter by notification ID
   ///
   /// * [NotificationLevel] level:
   ///
   /// * [NotificationType] type:
   ///
   /// * [bool] unread:
+  ///   Filter by unread status
   Future<List<NotificationDto>?> getNotifications({ String? id, NotificationLevel? level, NotificationType? type, bool? unread, }) async {
     final response = await getNotificationsWithHttpInfo( id: id, level: level, type: type, unread: unread, );
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -218,7 +258,12 @@ class NotificationsApi {
     return null;
   }
 
-  /// Performs an HTTP 'PUT /notifications/{id}' operation and returns the [Response].
+  /// Update a notification
+  ///
+  /// Update a specific notification to set its read status.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -250,6 +295,10 @@ class NotificationsApi {
     );
   }
 
+  /// Update a notification
+  ///
+  /// Update a specific notification to set its read status.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -270,7 +319,12 @@ class NotificationsApi {
     return null;
   }
 
-  /// Performs an HTTP 'PUT /notifications' operation and returns the [Response].
+  /// Update notifications
+  ///
+  /// Update a list of notifications. Allows to bulk-set the read status of notifications.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [NotificationUpdateAllDto] notificationUpdateAllDto (required):
@@ -299,6 +353,10 @@ class NotificationsApi {
     );
   }
 
+  /// Update notifications
+  ///
+  /// Update a list of notifications. Allows to bulk-set the read status of notifications.
+  ///
   /// Parameters:
   ///
   /// * [NotificationUpdateAllDto] notificationUpdateAllDto (required):

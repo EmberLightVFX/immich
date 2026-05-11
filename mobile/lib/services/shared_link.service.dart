@@ -5,9 +5,7 @@ import 'package:immich_mobile/services/api.service.dart';
 import 'package:logging/logging.dart';
 import 'package:openapi/api.dart';
 
-final sharedLinkServiceProvider = Provider(
-  (ref) => SharedLinkService(ref.watch(apiServiceProvider)),
-);
+final sharedLinkServiceProvider = Provider((ref) => SharedLinkService(ref.watch(apiServiceProvider)));
 
 class SharedLinkService {
   final ApiService _apiService;
@@ -18,9 +16,7 @@ class SharedLinkService {
   Future<AsyncValue<List<SharedLink>>> getAllSharedLinks() async {
     try {
       final list = await _apiService.sharedLinksApi.getAllSharedLinks();
-      return list != null
-          ? AsyncData(list.map(SharedLink.fromDto).toList())
-          : const AsyncData([]);
+      return list != null ? AsyncData(list.map(SharedLink.fromDto).toList()) : const AsyncData([]);
     } catch (e, stack) {
       _log.severe("Failed to fetch shared links", e, stack);
       return AsyncError(e, stack);
@@ -41,13 +37,13 @@ class SharedLinkService {
     required bool allowUpload,
     String? description,
     String? password,
+    String? slug,
     String? albumId,
     List<String>? assetIds,
     DateTime? expiresAt,
   }) async {
     try {
-      final type =
-          albumId != null ? SharedLinkType.ALBUM : SharedLinkType.INDIVIDUAL;
+      final type = albumId != null ? SharedLinkType.ALBUM : SharedLinkType.INDIVIDUAL;
       SharedLinkCreateDto? dto;
       if (type == SharedLinkType.ALBUM) {
         dto = SharedLinkCreateDto(
@@ -59,6 +55,7 @@ class SharedLinkService {
           expiresAt: expiresAt,
           description: description,
           password: password,
+          slug: slug,
         );
       } else if (assetIds != null) {
         dto = SharedLinkCreateDto(
@@ -69,13 +66,13 @@ class SharedLinkService {
           expiresAt: expiresAt,
           description: description,
           password: password,
+          slug: slug,
           assetIds: assetIds,
         );
       }
 
       if (dto != null) {
-        final responseDto =
-            await _apiService.sharedLinksApi.createSharedLink(dto);
+        final responseDto = await _apiService.sharedLinksApi.createSharedLink(dto);
         if (responseDto != null) {
           return SharedLink.fromDto(responseDto);
         }
@@ -94,6 +91,7 @@ class SharedLinkService {
     bool? changeExpiry = false,
     String? description,
     String? password,
+    String? slug,
     DateTime? expiresAt,
   }) async {
     try {
@@ -106,6 +104,7 @@ class SharedLinkService {
           expiresAt: expiresAt,
           description: description,
           password: password,
+          slug: slug,
           changeExpiryTime: changeExpiry,
         ),
       );

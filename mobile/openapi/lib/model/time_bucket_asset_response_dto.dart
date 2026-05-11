@@ -16,12 +16,15 @@ class TimeBucketAssetResponseDto {
     this.city = const [],
     this.country = const [],
     this.duration = const [],
+    this.fileCreatedAt = const [],
     this.id = const [],
     this.isFavorite = const [],
     this.isImage = const [],
     this.isTrashed = const [],
+    this.latitude = const [],
     this.livePhotoVideoId = const [],
-    this.localDateTime = const [],
+    this.localOffsetHours = const [],
+    this.longitude = const [],
     this.ownerId = const [],
     this.projectionType = const [],
     this.ratio = const [],
@@ -30,35 +33,58 @@ class TimeBucketAssetResponseDto {
     this.visibility = const [],
   });
 
+  /// Array of city names extracted from EXIF GPS data
   List<String?> city;
 
+  /// Array of country names extracted from EXIF GPS data
   List<String?> country;
 
-  List<String?> duration;
+  /// Array of video/gif durations in milliseconds (null for static images)
+  List<int?> duration;
 
+  /// Array of file creation timestamps in UTC
+  List<String> fileCreatedAt;
+
+  /// Array of asset IDs in the time bucket
   List<String> id;
 
+  /// Array indicating whether each asset is favorited
   List<bool> isFavorite;
 
+  /// Array indicating whether each asset is an image (false for videos)
   List<bool> isImage;
 
+  /// Array indicating whether each asset is in the trash
   List<bool> isTrashed;
 
+  /// Array of latitude coordinates extracted from EXIF GPS data
+  List<num?> latitude;
+
+  /// Array of live photo video asset IDs (null for non-live photos)
   List<String?> livePhotoVideoId;
 
-  List<String> localDateTime;
+  /// Array of UTC offset hours at the time each photo was taken. Positive values are east of UTC, negative values are west of UTC. Values may be fractional (e.g., 5.5 for +05:30, -9.75 for -09:45). Applying this offset to 'fileCreatedAt' will give you the time the photo was taken from the photographer's perspective.
+  List<num> localOffsetHours;
 
+  /// Array of longitude coordinates extracted from EXIF GPS data
+  List<num?> longitude;
+
+  /// Array of owner IDs for each asset
   List<String> ownerId;
 
+  /// Array of projection types for 360° content (e.g., \"EQUIRECTANGULAR\", \"CUBEFACE\", \"CYLINDRICAL\")
   List<String?> projectionType;
 
+  /// Array of aspect ratios (width/height) for each asset
   List<num> ratio;
 
-  /// (stack ID, stack asset count) tuple
+  /// Array of stack information as [stackId, assetCount] tuples (null for non-stacked assets)
   List<List<String>?> stack;
 
+  /// Array of BlurHash strings for generating asset previews (base64 encoded)
   List<String?> thumbhash;
 
+  /// Array of visibility statuses for each asset (e.g., ARCHIVE, TIMELINE, HIDDEN, LOCKED)
   List<AssetVisibility> visibility;
 
   @override
@@ -66,12 +92,15 @@ class TimeBucketAssetResponseDto {
     _deepEquality.equals(other.city, city) &&
     _deepEquality.equals(other.country, country) &&
     _deepEquality.equals(other.duration, duration) &&
+    _deepEquality.equals(other.fileCreatedAt, fileCreatedAt) &&
     _deepEquality.equals(other.id, id) &&
     _deepEquality.equals(other.isFavorite, isFavorite) &&
     _deepEquality.equals(other.isImage, isImage) &&
     _deepEquality.equals(other.isTrashed, isTrashed) &&
+    _deepEquality.equals(other.latitude, latitude) &&
     _deepEquality.equals(other.livePhotoVideoId, livePhotoVideoId) &&
-    _deepEquality.equals(other.localDateTime, localDateTime) &&
+    _deepEquality.equals(other.localOffsetHours, localOffsetHours) &&
+    _deepEquality.equals(other.longitude, longitude) &&
     _deepEquality.equals(other.ownerId, ownerId) &&
     _deepEquality.equals(other.projectionType, projectionType) &&
     _deepEquality.equals(other.ratio, ratio) &&
@@ -85,12 +114,15 @@ class TimeBucketAssetResponseDto {
     (city.hashCode) +
     (country.hashCode) +
     (duration.hashCode) +
+    (fileCreatedAt.hashCode) +
     (id.hashCode) +
     (isFavorite.hashCode) +
     (isImage.hashCode) +
     (isTrashed.hashCode) +
+    (latitude.hashCode) +
     (livePhotoVideoId.hashCode) +
-    (localDateTime.hashCode) +
+    (localOffsetHours.hashCode) +
+    (longitude.hashCode) +
     (ownerId.hashCode) +
     (projectionType.hashCode) +
     (ratio.hashCode) +
@@ -99,19 +131,22 @@ class TimeBucketAssetResponseDto {
     (visibility.hashCode);
 
   @override
-  String toString() => 'TimeBucketAssetResponseDto[city=$city, country=$country, duration=$duration, id=$id, isFavorite=$isFavorite, isImage=$isImage, isTrashed=$isTrashed, livePhotoVideoId=$livePhotoVideoId, localDateTime=$localDateTime, ownerId=$ownerId, projectionType=$projectionType, ratio=$ratio, stack=$stack, thumbhash=$thumbhash, visibility=$visibility]';
+  String toString() => 'TimeBucketAssetResponseDto[city=$city, country=$country, duration=$duration, fileCreatedAt=$fileCreatedAt, id=$id, isFavorite=$isFavorite, isImage=$isImage, isTrashed=$isTrashed, latitude=$latitude, livePhotoVideoId=$livePhotoVideoId, localOffsetHours=$localOffsetHours, longitude=$longitude, ownerId=$ownerId, projectionType=$projectionType, ratio=$ratio, stack=$stack, thumbhash=$thumbhash, visibility=$visibility]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'city'] = this.city;
       json[r'country'] = this.country;
       json[r'duration'] = this.duration;
+      json[r'fileCreatedAt'] = this.fileCreatedAt;
       json[r'id'] = this.id;
       json[r'isFavorite'] = this.isFavorite;
       json[r'isImage'] = this.isImage;
       json[r'isTrashed'] = this.isTrashed;
+      json[r'latitude'] = this.latitude;
       json[r'livePhotoVideoId'] = this.livePhotoVideoId;
-      json[r'localDateTime'] = this.localDateTime;
+      json[r'localOffsetHours'] = this.localOffsetHours;
+      json[r'longitude'] = this.longitude;
       json[r'ownerId'] = this.ownerId;
       json[r'projectionType'] = this.projectionType;
       json[r'ratio'] = this.ratio;
@@ -137,7 +172,10 @@ class TimeBucketAssetResponseDto {
             ? (json[r'country'] as Iterable).cast<String>().toList(growable: false)
             : const [],
         duration: json[r'duration'] is Iterable
-            ? (json[r'duration'] as Iterable).cast<String>().toList(growable: false)
+            ? (json[r'duration'] as Iterable).cast<int>().toList(growable: false)
+            : const [],
+        fileCreatedAt: json[r'fileCreatedAt'] is Iterable
+            ? (json[r'fileCreatedAt'] as Iterable).cast<String>().toList(growable: false)
             : const [],
         id: json[r'id'] is Iterable
             ? (json[r'id'] as Iterable).cast<String>().toList(growable: false)
@@ -151,11 +189,17 @@ class TimeBucketAssetResponseDto {
         isTrashed: json[r'isTrashed'] is Iterable
             ? (json[r'isTrashed'] as Iterable).cast<bool>().toList(growable: false)
             : const [],
+        latitude: json[r'latitude'] is Iterable
+            ? (json[r'latitude'] as Iterable).cast<num>().toList(growable: false)
+            : const [],
         livePhotoVideoId: json[r'livePhotoVideoId'] is Iterable
             ? (json[r'livePhotoVideoId'] as Iterable).cast<String>().toList(growable: false)
             : const [],
-        localDateTime: json[r'localDateTime'] is Iterable
-            ? (json[r'localDateTime'] as Iterable).cast<String>().toList(growable: false)
+        localOffsetHours: json[r'localOffsetHours'] is Iterable
+            ? (json[r'localOffsetHours'] as Iterable).cast<num>().toList(growable: false)
+            : const [],
+        longitude: json[r'longitude'] is Iterable
+            ? (json[r'longitude'] as Iterable).cast<num>().toList(growable: false)
             : const [],
         ownerId: json[r'ownerId'] is Iterable
             ? (json[r'ownerId'] as Iterable).cast<String>().toList(growable: false)
@@ -225,12 +269,13 @@ class TimeBucketAssetResponseDto {
     'city',
     'country',
     'duration',
+    'fileCreatedAt',
     'id',
     'isFavorite',
     'isImage',
     'isTrashed',
     'livePhotoVideoId',
-    'localDateTime',
+    'localOffsetHours',
     'ownerId',
     'projectionType',
     'ratio',

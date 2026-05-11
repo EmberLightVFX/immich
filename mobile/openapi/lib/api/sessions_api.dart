@@ -16,7 +16,12 @@ class SessionsApi {
 
   final ApiClient apiClient;
 
-  /// Performs an HTTP 'POST /sessions' operation and returns the [Response].
+  /// Create a session
+  ///
+  /// Create a session as a child to the current session. This endpoint is used for casting.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [SessionCreateDto] sessionCreateDto (required):
@@ -45,6 +50,10 @@ class SessionsApi {
     );
   }
 
+  /// Create a session
+  ///
+  /// Create a session as a child to the current session. This endpoint is used for casting.
+  ///
   /// Parameters:
   ///
   /// * [SessionCreateDto] sessionCreateDto (required):
@@ -63,7 +72,11 @@ class SessionsApi {
     return null;
   }
 
-  /// Performs an HTTP 'DELETE /sessions' operation and returns the [Response].
+  /// Delete all sessions
+  ///
+  /// Delete all sessions for the user. This will not delete the current session.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> deleteAllSessionsWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/sessions';
@@ -89,6 +102,9 @@ class SessionsApi {
     );
   }
 
+  /// Delete all sessions
+  ///
+  /// Delete all sessions for the user. This will not delete the current session.
   Future<void> deleteAllSessions() async {
     final response = await deleteAllSessionsWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -96,7 +112,12 @@ class SessionsApi {
     }
   }
 
-  /// Performs an HTTP 'DELETE /sessions/{id}' operation and returns the [Response].
+  /// Delete a session
+  ///
+  /// Delete a specific session by id.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -126,6 +147,10 @@ class SessionsApi {
     );
   }
 
+  /// Delete a session
+  ///
+  /// Delete a specific session by id.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -136,7 +161,11 @@ class SessionsApi {
     }
   }
 
-  /// Performs an HTTP 'GET /sessions' operation and returns the [Response].
+  /// Retrieve sessions
+  ///
+  /// Retrieve a list of sessions for the user.
+  ///
+  /// Note: This method returns the HTTP [Response].
   Future<Response> getSessionsWithHttpInfo() async {
     // ignore: prefer_const_declarations
     final apiPath = r'/sessions';
@@ -162,6 +191,9 @@ class SessionsApi {
     );
   }
 
+  /// Retrieve sessions
+  ///
+  /// Retrieve a list of sessions for the user.
   Future<List<SessionResponseDto>?> getSessions() async {
     final response = await getSessionsWithHttpInfo();
     if (response.statusCode >= HttpStatus.badRequest) {
@@ -180,7 +212,12 @@ class SessionsApi {
     return null;
   }
 
-  /// Performs an HTTP 'POST /sessions/{id}/lock' operation and returns the [Response].
+  /// Lock a session
+  ///
+  /// Lock a specific session by id.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -210,6 +247,10 @@ class SessionsApi {
     );
   }
 
+  /// Lock a session
+  ///
+  /// Lock a specific session by id.
+  ///
   /// Parameters:
   ///
   /// * [String] id (required):
@@ -218,5 +259,66 @@ class SessionsApi {
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
+  }
+
+  /// Update a session
+  ///
+  /// Update a specific session identified by id.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  ///
+  /// * [SessionUpdateDto] sessionUpdateDto (required):
+  Future<Response> updateSessionWithHttpInfo(String id, SessionUpdateDto sessionUpdateDto,) async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/sessions/{id}'
+      .replaceAll('{id}', id);
+
+    // ignore: prefer_final_locals
+    Object? postBody = sessionUpdateDto;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Update a session
+  ///
+  /// Update a specific session identified by id.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  ///
+  /// * [SessionUpdateDto] sessionUpdateDto (required):
+  Future<SessionResponseDto?> updateSession(String id, SessionUpdateDto sessionUpdateDto,) async {
+    final response = await updateSessionWithHttpInfo(id, sessionUpdateDto,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'SessionResponseDto',) as SessionResponseDto;
+    
+    }
+    return null;
   }
 }

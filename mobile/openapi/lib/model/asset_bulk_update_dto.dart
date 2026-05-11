@@ -14,6 +14,7 @@ class AssetBulkUpdateDto {
   /// Returns a new [AssetBulkUpdateDto] instance.
   AssetBulkUpdateDto({
     this.dateTimeOriginal,
+    this.dateTimeRelative,
     this.description,
     this.duplicateId,
     this.ids = const [],
@@ -21,9 +22,11 @@ class AssetBulkUpdateDto {
     this.latitude,
     this.longitude,
     this.rating,
+    this.timeZone,
     this.visibility,
   });
 
+  /// Original date and time
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -32,6 +35,19 @@ class AssetBulkUpdateDto {
   ///
   String? dateTimeOriginal;
 
+  /// Relative time offset in seconds
+  ///
+  /// Minimum value: -9007199254740991
+  /// Maximum value: 9007199254740991
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  int? dateTimeRelative;
+
+  /// Asset description
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -40,10 +56,13 @@ class AssetBulkUpdateDto {
   ///
   String? description;
 
+  /// Duplicate ID
   String? duplicateId;
 
+  /// Asset IDs to update
   List<String> ids;
 
+  /// Mark as favorite
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -52,6 +71,10 @@ class AssetBulkUpdateDto {
   ///
   bool? isFavorite;
 
+  /// Latitude coordinate
+  ///
+  /// Minimum value: -90
+  /// Maximum value: 90
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -60,6 +83,10 @@ class AssetBulkUpdateDto {
   ///
   num? latitude;
 
+  /// Longitude coordinate
+  ///
+  /// Minimum value: -180
+  /// Maximum value: 180
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -68,15 +95,20 @@ class AssetBulkUpdateDto {
   ///
   num? longitude;
 
+  /// Rating in range [1-5], or null for unrated
+  ///
   /// Minimum value: -1
   /// Maximum value: 5
+  int? rating;
+
+  /// Time zone (IANA timezone)
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
-  num? rating;
+  String? timeZone;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -89,6 +121,7 @@ class AssetBulkUpdateDto {
   @override
   bool operator ==(Object other) => identical(this, other) || other is AssetBulkUpdateDto &&
     other.dateTimeOriginal == dateTimeOriginal &&
+    other.dateTimeRelative == dateTimeRelative &&
     other.description == description &&
     other.duplicateId == duplicateId &&
     _deepEquality.equals(other.ids, ids) &&
@@ -96,12 +129,14 @@ class AssetBulkUpdateDto {
     other.latitude == latitude &&
     other.longitude == longitude &&
     other.rating == rating &&
+    other.timeZone == timeZone &&
     other.visibility == visibility;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (dateTimeOriginal == null ? 0 : dateTimeOriginal!.hashCode) +
+    (dateTimeRelative == null ? 0 : dateTimeRelative!.hashCode) +
     (description == null ? 0 : description!.hashCode) +
     (duplicateId == null ? 0 : duplicateId!.hashCode) +
     (ids.hashCode) +
@@ -109,10 +144,11 @@ class AssetBulkUpdateDto {
     (latitude == null ? 0 : latitude!.hashCode) +
     (longitude == null ? 0 : longitude!.hashCode) +
     (rating == null ? 0 : rating!.hashCode) +
+    (timeZone == null ? 0 : timeZone!.hashCode) +
     (visibility == null ? 0 : visibility!.hashCode);
 
   @override
-  String toString() => 'AssetBulkUpdateDto[dateTimeOriginal=$dateTimeOriginal, description=$description, duplicateId=$duplicateId, ids=$ids, isFavorite=$isFavorite, latitude=$latitude, longitude=$longitude, rating=$rating, visibility=$visibility]';
+  String toString() => 'AssetBulkUpdateDto[dateTimeOriginal=$dateTimeOriginal, dateTimeRelative=$dateTimeRelative, description=$description, duplicateId=$duplicateId, ids=$ids, isFavorite=$isFavorite, latitude=$latitude, longitude=$longitude, rating=$rating, timeZone=$timeZone, visibility=$visibility]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -120,6 +156,11 @@ class AssetBulkUpdateDto {
       json[r'dateTimeOriginal'] = this.dateTimeOriginal;
     } else {
     //  json[r'dateTimeOriginal'] = null;
+    }
+    if (this.dateTimeRelative != null) {
+      json[r'dateTimeRelative'] = this.dateTimeRelative;
+    } else {
+    //  json[r'dateTimeRelative'] = null;
     }
     if (this.description != null) {
       json[r'description'] = this.description;
@@ -152,6 +193,11 @@ class AssetBulkUpdateDto {
     } else {
     //  json[r'rating'] = null;
     }
+    if (this.timeZone != null) {
+      json[r'timeZone'] = this.timeZone;
+    } else {
+    //  json[r'timeZone'] = null;
+    }
     if (this.visibility != null) {
       json[r'visibility'] = this.visibility;
     } else {
@@ -170,6 +216,7 @@ class AssetBulkUpdateDto {
 
       return AssetBulkUpdateDto(
         dateTimeOriginal: mapValueOfType<String>(json, r'dateTimeOriginal'),
+        dateTimeRelative: mapValueOfType<int>(json, r'dateTimeRelative'),
         description: mapValueOfType<String>(json, r'description'),
         duplicateId: mapValueOfType<String>(json, r'duplicateId'),
         ids: json[r'ids'] is Iterable
@@ -178,7 +225,8 @@ class AssetBulkUpdateDto {
         isFavorite: mapValueOfType<bool>(json, r'isFavorite'),
         latitude: num.parse('${json[r'latitude']}'),
         longitude: num.parse('${json[r'longitude']}'),
-        rating: num.parse('${json[r'rating']}'),
+        rating: mapValueOfType<int>(json, r'rating'),
+        timeZone: mapValueOfType<String>(json, r'timeZone'),
         visibility: AssetVisibility.fromJson(json[r'visibility']),
       );
     }

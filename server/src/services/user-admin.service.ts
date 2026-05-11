@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { SALT_ROUNDS } from 'src/constants';
 import { AssetStatsDto, AssetStatsResponseDto, mapStats } from 'src/dtos/asset.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
+import { SessionResponseDto, mapSession } from 'src/dtos/session.dto';
 import { UserPreferencesResponseDto, UserPreferencesUpdateDto, mapPreferences } from 'src/dtos/user-preferences.dto';
 import {
   UserAdminCreateDto,
@@ -35,10 +36,10 @@ export class UserAdminService extends BaseService {
 
     const user = await this.createUser(userDto);
 
-    await this.eventRepository.emit('user.signup', {
+    await this.eventRepository.emit('UserSignup', {
       notify: !!notify,
       id: user.id,
-      tempPassword: user.shouldChangePassword ? userDto.password : undefined,
+      password: userDto.password,
     });
 
     return mapUserAdmin(user);
@@ -52,6 +53,10 @@ export class UserAdminService extends BaseService {
   async update(auth: AuthDto, id: string, dto: UserAdminUpdateDto): Promise<UserAdminResponseDto> {
     const user = await this.findOrFail(id, {});
 
+    if (dto.isAdmin !== undefined && dto.isAdmin !== auth.user.isAdmin && auth.user.id === id) {
+      throw new BadRequestException('Admin status can only be changed by another admin');
+    }
+
     if (dto.quotaSizeInBytes && user.quotaSizeInBytes !== dto.quotaSizeInBytes) {
       await this.userRepository.syncUsage(id);
     }
@@ -59,7 +64,8 @@ export class UserAdminService extends BaseService {
     if (dto.email) {
       const duplicate = await this.userRepository.getByEmail(dto.email);
       if (duplicate && duplicate.id !== id) {
-        throw new BadRequestException('Email already in use by another account');
+        this.logger.debug('Email already in use by another account');
+        throw new BadRequestException('Email is not available');
       }
     }
 
@@ -89,18 +95,20 @@ export class UserAdminService extends BaseService {
 
   async delete(auth: AuthDto, id: string, dto: UserAdminDeleteDto): Promise<UserAdminResponseDto> {
     const { force } = dto;
-    const { isAdmin } = await this.findOrFail(id, {});
-    if (isAdmin) {
-      throw new ForbiddenException('Cannot delete admin user');
+    await this.findOrFail(id, {});
+    if (auth.user.id === id) {
+      throw new ForbiddenException('Cannot delete your own account');
     }
 
     await this.albumRepository.softDeleteAll(id);
 
-    const status = force ? UserStatus.REMOVING : UserStatus.DELETED;
+    const status = force ? UserStatus.Removing : UserStatus.Deleted;
     const user = await this.userRepository.update(id, { status, deletedAt: new Date() });
 
+    await this.eventRepository.emit('UserTrash', user);
+
     if (force) {
-      await this.jobRepository.queue({ name: JobName.USER_DELETION, data: { id: user.id, force } });
+      await this.jobRepository.queue({ name: JobName.UserDelete, data: { id: user.id, force } });
     }
 
     return mapUserAdmin(user);
@@ -110,7 +118,13 @@ export class UserAdminService extends BaseService {
     await this.findOrFail(id, { withDeleted: true });
     await this.albumRepository.restoreAll(id);
     const user = await this.userRepository.restore(id);
+    await this.eventRepository.emit('UserRestore', user);
     return mapUserAdmin(user);
+  }
+
+  async getSessions(auth: AuthDto, id: string): Promise<SessionResponseDto[]> {
+    const sessions = await this.sessionRepository.getByUserId(id);
+    return sessions.map((session) => mapSession(session));
   }
 
   async getStatistics(auth: AuthDto, id: string, dto: AssetStatsDto): Promise<AssetStatsResponseDto> {
@@ -130,7 +144,7 @@ export class UserAdminService extends BaseService {
     const newPreferences = mergePreferences(getPreferences(metadata), dto);
 
     await this.userRepository.upsertMetadata(id, {
-      key: UserMetadataKey.PREFERENCES,
+      key: UserMetadataKey.Preferences,
       value: getPreferencesPartial(newPreferences),
     });
 

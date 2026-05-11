@@ -24,9 +24,10 @@ class PersonWithFacesResponseDto {
     this.updatedAt,
   });
 
+  /// Person date of birth
   DateTime? birthDate;
 
-  /// This property was added in v1.126.0
+  /// Person color (hex)
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -37,9 +38,10 @@ class PersonWithFacesResponseDto {
 
   List<AssetFaceWithoutPersonResponseDto> faces;
 
+  /// Person ID
   String id;
 
-  /// This property was added in v1.126.0
+  /// Is favorite
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -48,13 +50,16 @@ class PersonWithFacesResponseDto {
   ///
   bool? isFavorite;
 
+  /// Is hidden
   bool isHidden;
 
+  /// Person name
   String name;
 
+  /// Thumbnail path
   String thumbnailPath;
 
-  /// This property was added in v1.107.0
+  /// Last update date
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated

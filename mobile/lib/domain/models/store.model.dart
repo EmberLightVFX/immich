@@ -22,7 +22,6 @@ enum StoreKey<T> {
   // user settings from [AppSettingsEnum] below:
   loadPreview<bool>._(100),
   loadOriginal<bool>._(101),
-  themeMode<String>._(102),
   tilesPerRow<int>._(103),
   dynamicLayout<bool>._(104),
   groupAssetsBy<int>._(105),
@@ -35,7 +34,6 @@ enum StoreKey<T> {
   albumThumbnailCacheSize<int>._(112),
   selectedAlbumSortOrder<int>._(113),
   advancedTroubleshooting<bool>._(114),
-  logLevel<int>._(115),
   preferRemoteImage<bool>._(116),
   loopVideo<bool>._(117),
   // map related settings
@@ -50,11 +48,6 @@ enum StoreKey<T> {
   enableHapticFeedback<bool>._(126),
   customHeaders<String>._(127),
 
-  // theme settings
-  primaryColor<String>._(128),
-  dynamicTheme<bool>._(129),
-  colorfulInterface<bool>._(130),
-
   syncAlbums<bool>._(131),
 
   // Auto endpoint switching
@@ -67,32 +60,66 @@ enum StoreKey<T> {
   loadOriginalVideo<bool>._(136),
   manageLocalMediaAndroid<bool>._(137),
 
+  // Read-only Mode settings
+  readonlyModeEnabled<bool>._(138),
+
+  autoPlayVideo<bool>._(139),
+  albumGridView<bool>._(140),
+
+  // Image viewer navigation settings
+  tapToNavigate<bool>._(141),
+
   // Experimental stuff
-  photoManagerCustomFilter<bool>._(1000);
+  photoManagerCustomFilter<bool>._(1000),
+  betaPromptShown<bool>._(1001),
+  betaTimeline<bool>._(1002),
+  enableBackup<bool>._(1003),
+  useWifiForUploadVideos<bool>._(1004),
+  useWifiForUploadPhotos<bool>._(1005),
+  needBetaMigration<bool>._(1006),
+  // TODO: Remove this after patching open-api
+  shouldResetSync<bool>._(1007),
+
+  // Free up space
+  syncMigrationStatus<String>._(1013),
+
+  // Legacy keys that have been migrated to the new metadata store
+  legacyPrimaryColor<String>._(128),
+  legacyDynamicTheme<bool>._(129),
+  legacyColorfulInterface<bool>._(130),
+  legacyThemeMode<String>._(102),
+  legacyCleanupKeepFavorites<bool>._(1008),
+  legacyCleanupKeepMediaType<int>._(1009),
+  legacyCleanupKeepAlbumIds<String>._(1010),
+  legacyCleanupCutoffDaysAgo<int>._(1011),
+  legacyCleanupDefaultsInitialized<bool>._(1012),
+  legacyLogLevel<int>._(115);
 
   const StoreKey._(this.id);
   final int id;
   Type get type => T;
 }
 
-class StoreUpdateEvent<T> {
+class StoreDto<T> {
   final StoreKey<T> key;
   final T? value;
 
-  const StoreUpdateEvent(this.key, this.value);
+  const StoreDto(this.key, this.value);
 
   @override
   String toString() {
     return '''
-StoreUpdateEvent: {
+StoreDto: {
   key: $key,
   value: ${value ?? '<NA>'},
 }''';
   }
 
   @override
-  bool operator ==(covariant StoreUpdateEvent<T> other) {
-    if (identical(this, other)) return true;
+  bool operator ==(covariant StoreDto<T> other) {
+    if (identical(this, other)) {
+      return true;
+    }
 
     return other.key == key && other.value == value;
   }

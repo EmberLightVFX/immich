@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 OPENAPI_GENERATOR_VERSION=v7.12.0
 
+set -euo pipefail
+
 # usage: ./bin/generate-open-api.sh
 
 function dart {
@@ -15,28 +17,34 @@ function dart {
   patch --no-backup-if-mismatch -u api.mustache <api.mustache.patch
 
   cd ../../
-  npx --yes @openapitools/openapi-generator-cli generate -g dart -i ./immich-openapi-specs.json -o ../mobile/openapi -t ./templates/mobile
+  pnpm dlx --allow-build="" @openapitools/openapi-generator-cli generate -g dart -i ./immich-openapi-specs.json -o ../mobile/openapi -t ./templates/mobile
 
   # Post generate patches
   patch --no-backup-if-mismatch -u ../mobile/openapi/lib/api_client.dart <./patch/api_client.dart.patch
   patch --no-backup-if-mismatch -u ../mobile/openapi/lib/api.dart <./patch/api.dart.patch
   patch --no-backup-if-mismatch -u ../mobile/openapi/pubspec.yaml <./patch/pubspec_immich_mobile.yaml.patch
+  patch --no-backup-if-mismatch -u ../mobile/openapi/lib/model/asset_edit_action_item_dto.dart <./patch/asset_edit_action_item_dto.dart.patch
   # Don't include analysis_options.yaml for the generated openapi files
   # so that language servers can properly exclude the mobile/openapi directory
   rm ../mobile/openapi/analysis_options.yaml
 }
 
 function typescript {
-  npx --yes oazapfts --optimistic --argumentStyle=object --useEnumType immich-openapi-specs.json typescript-sdk/src/fetch-client.ts
-  npm --prefix typescript-sdk ci && npm --prefix typescript-sdk run build
+  pnpm dlx oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas immich-openapi-specs.json ../packages/sdk/src/fetch-client.ts
+  pnpm --filter @immich/sdk install --frozen-lockfile
+  pnpm --filter @immich/sdk build
 }
 
 # requires server to be built
-npm run sync:open-api --prefix=../server
+(
+  cd ..
+  SHARP_IGNORE_GLOBAL_LIBVIPS=true pnpm --filter immich build
+  pnpm --filter immich sync:open-api
+)
 
-if [[ $1 == 'dart' ]]; then
+if [[ $# -ge 1 ]] && [[ $1 == 'dart' ]]; then
   dart
-elif [[ $1 == 'typescript' ]]; then
+elif [[ $# -ge 1 ]] && [[ $1 == 'typescript' ]]; then
   typescript
 else
   dart

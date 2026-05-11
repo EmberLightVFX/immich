@@ -6,6 +6,7 @@ import { StorageCore } from 'src/cores/storage.core';
 import { OnJob } from 'src/decorators';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { LicenseKeyDto, LicenseResponseDto } from 'src/dtos/license.dto';
+import { OnboardingDto, OnboardingResponseDto } from 'src/dtos/onboarding.dto';
 import { UserPreferencesResponseDto, UserPreferencesUpdateDto, mapPreferences } from 'src/dtos/user-preferences.dto';
 import { CreateProfileImageResponseDto } from 'src/dtos/user-profile.dto';
 import { UserAdminResponseDto, UserResponseDto, UserUpdateMeDto, mapUser, mapUserAdmin } from 'src/dtos/user.dto';
@@ -15,7 +16,9 @@ import { UserTable } from 'src/schema/tables/user.table';
 import { BaseService } from 'src/services/base.service';
 import { JobOf, UserMetadataItem } from 'src/types';
 import { ImmichFileResponse } from 'src/utils/file';
+import { mimeTypes } from 'src/utils/mime-types';
 import { getPreferences, getPreferencesPartial, mergePreferences } from 'src/utils/preferences';
+import { generateProfileImage } from 'src/utils/profile-image';
 
 @Injectable()
 export class UserService extends BaseService {
@@ -46,7 +49,8 @@ export class UserService extends BaseService {
     if (dto.email) {
       const duplicate = await this.userRepository.getByEmail(dto.email);
       if (duplicate && duplicate.id !== user.id) {
-        throw new BadRequestException('Email already in use by another account');
+        this.logger.warn('Email already in use by another account');
+        throw new BadRequestException('Email is not available');
       }
     }
 
@@ -77,7 +81,7 @@ export class UserService extends BaseService {
     const updated = mergePreferences(getPreferences(metadata), dto);
 
     await this.userRepository.upsertMetadata(auth.user.id, {
-      key: UserMetadataKey.PREFERENCES,
+      key: UserMetadataKey.Preferences,
       value: getPreferencesPartial(updated),
     });
 
@@ -90,16 +94,29 @@ export class UserService extends BaseService {
   }
 
   async createProfileImage(auth: AuthDto, file: Express.Multer.File): Promise<CreateProfileImageResponseDto> {
-    const { profileImagePath: oldpath } = await this.findOrFail(auth.user.id, { withDeleted: false });
+    const { profileImagePath: oldPath } = await this.findOrFail(auth.user.id, { withDeleted: false });
+
+    let profileImagePath: string;
+    try {
+      const config = await this.getConfig({ withCache: true });
+      profileImagePath = await generateProfileImage(
+        { media: this.mediaRepository, crypto: this.cryptoRepository, storageCore: this.storageCore },
+        config,
+        auth.user.id,
+        file.path,
+      );
+    } catch (error) {
+      await this.jobRepository.queue({ name: JobName.FileDelete, data: { files: [file.path] } });
+      throw new BadRequestException('Unable to process profile image', { cause: error });
+    }
 
     const user = await this.userRepository.update(auth.user.id, {
-      profileImagePath: file.path,
+      profileImagePath,
       profileChangedAt: new Date(),
     });
 
-    if (oldpath !== '') {
-      await this.jobRepository.queue({ name: JobName.DELETE_FILES, data: { files: [oldpath] } });
-    }
+    const toDelete = [file.path, ...(oldPath ? [oldPath] : [])];
+    await this.jobRepository.queue({ name: JobName.FileDelete, data: { files: toDelete } });
 
     return {
       userId: user.id,
@@ -114,19 +131,20 @@ export class UserService extends BaseService {
       throw new BadRequestException("Can't delete a missing profile Image");
     }
     await this.userRepository.update(auth.user.id, { profileImagePath: '', profileChangedAt: new Date() });
-    await this.jobRepository.queue({ name: JobName.DELETE_FILES, data: { files: [user.profileImagePath] } });
+    await this.jobRepository.queue({ name: JobName.FileDelete, data: { files: [user.profileImagePath] } });
   }
 
   async getProfileImage(id: string): Promise<ImmichFileResponse> {
-    const user = await this.findOrFail(id, {});
-    if (!user.profileImagePath) {
-      throw new NotFoundException('User does not have a profile image');
+    const user = await this.userRepository.get(id, {});
+    if (!user || !user.profileImagePath) {
+      this.logger.debug('User or profile image not found');
+      throw new NotFoundException();
     }
 
     return new ImmichFileResponse({
       path: user.profileImagePath,
-      contentType: 'image/jpeg',
-      cacheControl: CacheControl.NONE,
+      contentType: mimeTypes.lookup(user.profileImagePath),
+      cacheControl: CacheControl.None,
     });
   }
 
@@ -134,7 +152,7 @@ export class UserService extends BaseService {
     const metadata = await this.userRepository.getMetadata(auth.user.id);
 
     const license = metadata.find(
-      (item): item is UserMetadataItem<UserMetadataKey.LICENSE> => item.key === UserMetadataKey.LICENSE,
+      (item): item is UserMetadataItem<UserMetadataKey.License> => item.key === UserMetadataKey.License,
     );
     if (!license) {
       throw new NotFoundException();
@@ -143,7 +161,7 @@ export class UserService extends BaseService {
   }
 
   async deleteLicense({ user }: AuthDto): Promise<void> {
-    await this.userRepository.deleteMetadata(user.id, UserMetadataKey.LICENSE);
+    await this.userRepository.deleteMetadata(user.id, UserMetadataKey.License);
   }
 
   async setLicense(auth: AuthDto, license: LicenseKeyDto): Promise<LicenseResponseDto> {
@@ -172,49 +190,82 @@ export class UserService extends BaseService {
     const activatedAt = new Date();
 
     await this.userRepository.upsertMetadata(auth.user.id, {
-      key: UserMetadataKey.LICENSE,
+      key: UserMetadataKey.License,
       value: { ...license, activatedAt: activatedAt.toISOString() },
     });
 
     return { ...license, activatedAt };
   }
 
-  @OnJob({ name: JobName.USER_SYNC_USAGE, queue: QueueName.BACKGROUND_TASK })
-  async handleUserSyncUsage(): Promise<JobStatus> {
-    await this.userRepository.syncUsage();
-    return JobStatus.SUCCESS;
+  async getOnboarding(auth: AuthDto): Promise<OnboardingResponseDto> {
+    const metadata = await this.userRepository.getMetadata(auth.user.id);
+
+    const onboardingData = metadata.find(
+      (item): item is UserMetadataItem<UserMetadataKey.Onboarding> => item.key === UserMetadataKey.Onboarding,
+    )?.value;
+
+    if (!onboardingData) {
+      return { isOnboarded: false };
+    }
+
+    return {
+      isOnboarded: onboardingData.isOnboarded,
+    };
   }
 
-  @OnJob({ name: JobName.USER_DELETE_CHECK, queue: QueueName.BACKGROUND_TASK })
+  async deleteOnboarding({ user }: AuthDto): Promise<void> {
+    await this.userRepository.deleteMetadata(user.id, UserMetadataKey.Onboarding);
+  }
+
+  async setOnboarding(auth: AuthDto, onboarding: OnboardingDto): Promise<OnboardingResponseDto> {
+    await this.userRepository.upsertMetadata(auth.user.id, {
+      key: UserMetadataKey.Onboarding,
+      value: {
+        isOnboarded: onboarding.isOnboarded,
+      },
+    });
+
+    return {
+      isOnboarded: onboarding.isOnboarded,
+    };
+  }
+
+  @OnJob({ name: JobName.UserSyncUsage, queue: QueueName.BackgroundTask })
+  async handleUserSyncUsage(): Promise<JobStatus> {
+    await this.userRepository.syncUsage();
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.UserDeleteCheck, queue: QueueName.BackgroundTask })
   async handleUserDeleteCheck(): Promise<JobStatus> {
     const config = await this.getConfig({ withCache: false });
     const users = await this.userRepository.getDeletedAfter(DateTime.now().minus({ days: config.user.deleteDelay }));
-    await this.jobRepository.queueAll(users.map((user) => ({ name: JobName.USER_DELETION, data: { id: user.id } })));
-    return JobStatus.SUCCESS;
+    await this.jobRepository.queueAll(users.map((user) => ({ name: JobName.UserDelete, data: { id: user.id } })));
+    return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.USER_DELETION, queue: QueueName.BACKGROUND_TASK })
-  async handleUserDelete({ id, force }: JobOf<JobName.USER_DELETION>): Promise<JobStatus> {
+  @OnJob({ name: JobName.UserDelete, queue: QueueName.BackgroundTask })
+  async handleUserDelete({ id, force }: JobOf<JobName.UserDelete>) {
     const config = await this.getConfig({ withCache: false });
     const user = await this.userRepository.get(id, { withDeleted: true });
     if (!user) {
-      return JobStatus.FAILED;
+      return;
     }
 
     // just for extra protection here
     if (!force && !this.isReadyForDeletion(user, config.user.deleteDelay)) {
       this.logger.warn(`Skipped user that was not ready for deletion: id=${id}`);
-      return JobStatus.SKIPPED;
+      return;
     }
 
     this.logger.log(`Deleting user: ${user.id}`);
 
     const folders = [
       StorageCore.getLibraryFolder(user),
-      StorageCore.getFolderLocation(StorageFolder.UPLOAD, user.id),
-      StorageCore.getFolderLocation(StorageFolder.PROFILE, user.id),
-      StorageCore.getFolderLocation(StorageFolder.THUMBNAILS, user.id),
-      StorageCore.getFolderLocation(StorageFolder.ENCODED_VIDEO, user.id),
+      StorageCore.getFolderLocation(StorageFolder.Upload, user.id),
+      StorageCore.getFolderLocation(StorageFolder.Profile, user.id),
+      StorageCore.getFolderLocation(StorageFolder.Thumbnails, user.id),
+      StorageCore.getFolderLocation(StorageFolder.EncodedVideo, user.id),
     ];
 
     for (const folder of folders) {
@@ -226,7 +277,7 @@ export class UserService extends BaseService {
     await this.albumRepository.deleteAll(user.id);
     await this.userRepository.delete(user, true);
 
-    return JobStatus.SUCCESS;
+    await this.eventRepository.emit('UserDelete', user);
   }
 
   private isReadyForDeletion(user: { id: string; deletedAt?: Date | null }, deleteDelay: number): boolean {

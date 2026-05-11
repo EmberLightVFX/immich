@@ -1,163 +1,160 @@
-// ignore_for_file: avoid-unsafe-collection-methods
-
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:drift/drift.dart';
+import 'package:flutter/material.dart';
+import 'package:immich_mobile/constants/colors.dart';
+import 'package:immich_mobile/constants/enums.dart';
+import 'package:immich_mobile/domain/models/log.model.dart';
+import 'package:immich_mobile/domain/models/metadata_key.dart';
 import 'package:immich_mobile/domain/models/store.model.dart';
-import 'package:immich_mobile/entities/album.entity.dart';
-import 'package:immich_mobile/entities/android_device_asset.entity.dart';
-import 'package:immich_mobile/entities/asset.entity.dart';
-import 'package:immich_mobile/entities/etag.entity.dart';
-import 'package:immich_mobile/entities/ios_device_asset.entity.dart';
 import 'package:immich_mobile/entities/store.entity.dart';
-import 'package:immich_mobile/infrastructure/entities/device_asset.entity.dart';
-import 'package:immich_mobile/infrastructure/entities/exif.entity.dart';
-import 'package:immich_mobile/infrastructure/entities/store.entity.dart';
-import 'package:immich_mobile/infrastructure/entities/user.entity.dart';
-import 'package:immich_mobile/utils/diff.dart';
-import 'package:isar/isar.dart';
-// ignore: import_rule_photo_manager
-import 'package:photo_manager/photo_manager.dart';
+import 'package:immich_mobile/infrastructure/entities/metadata.entity.drift.dart';
+import 'package:immich_mobile/infrastructure/repositories/db.repository.dart';
+import 'package:immich_mobile/infrastructure/repositories/network.repository.dart';
+import 'package:immich_mobile/services/api.service.dart';
 
-const int targetVersion = 11;
+const int targetVersion = 26;
 
-Future<void> migrateDatabaseIfNeeded(Isar db) async {
+Future<void> migrateDatabaseIfNeeded(Drift drift) async {
   final int version = Store.get(StoreKey.version, targetVersion);
 
-  if (version < 9) {
-    await Store.put(StoreKey.version, targetVersion);
-    final value = await db.storeValues.get(StoreKey.currentUser.id);
-    if (value != null) {
-      final id = value.intValue;
-      if (id != null) {
-        await db.writeTxn(() async {
-          final user = await db.users.get(id);
-          await db.storeValues
-              .put(StoreValue(StoreKey.currentUser.id, strValue: user?.id));
-        });
-      }
-    }
+  if (version < 25) {
+    await _migrateTo25();
   }
 
-  if (version < 10) {
-    await Store.put(StoreKey.version, targetVersion);
-    await _migrateDeviceAsset(db);
+  if (version < 26) {
+    await _migrateTo26(drift);
   }
 
-  final shouldTruncate = version < 8 && version < targetVersion;
-  if (shouldTruncate) {
-    await _migrateTo(db, targetVersion);
-  }
+  await Store.put(StoreKey.version, targetVersion);
+  return;
 }
 
-Future<void> _migrateTo(Isar db, int version) async {
-  await Store.delete(StoreKey.assetETag);
-  await db.writeTxn(() async {
-    await db.assets.clear();
-    await db.exifInfos.clear();
-    await db.albums.clear();
-    await db.eTags.clear();
-    await db.users.clear();
-  });
-  await Store.put(StoreKey.version, version);
-}
-
-Future<void> _migrateDeviceAsset(Isar db) async {
-  final ids = Platform.isAndroid
-      ? (await db.androidDeviceAssets.where().findAll())
-          .map((a) => _DeviceAsset(assetId: a.id.toString(), hash: a.hash))
-          .toList()
-      : (await db.iOSDeviceAssets.where().findAll())
-          .map((i) => _DeviceAsset(assetId: i.id, hash: i.hash))
-          .toList();
-
-  final PermissionState ps = await PhotoManager.requestPermissionExtend();
-  if (!ps.hasAccess) {
-    if (kDebugMode) {
-      debugPrint(
-        "[MIGRATION] Photo library permission not granted. Skipping device asset migration.",
-      );
-    }
-
+Future<void> _migrateTo25() async {
+  final accessToken = Store.tryGet(StoreKey.accessToken);
+  if (accessToken == null || accessToken.isEmpty) {
     return;
   }
 
-  List<_DeviceAsset> localAssets = [];
-  final List<AssetPathEntity> paths =
-      await PhotoManager.getAssetPathList(onlyAll: true);
-
-  if (paths.isEmpty) {
-    localAssets = (await db.assets
-            .where()
-            .anyOf(ids, (query, id) => query.localIdEqualTo(id.assetId))
-            .findAll())
-        .map(
-          (a) => _DeviceAsset(assetId: a.localId!, dateTime: a.fileModifiedAt),
-        )
-        .toList();
-  } else {
-    final AssetPathEntity albumWithAll = paths.first;
-    final int assetCount = await albumWithAll.assetCountAsync;
-
-    final List<AssetEntity> allDeviceAssets =
-        await albumWithAll.getAssetListRange(start: 0, end: assetCount);
-
-    localAssets = allDeviceAssets
-        .map((a) => _DeviceAsset(assetId: a.id, dateTime: a.modifiedDateTime))
-        .toList();
+  final serverUrls = ApiService.getServerUrls();
+  if (serverUrls.isEmpty) {
+    return;
   }
 
-  debugPrint("[MIGRATION] Device Asset Ids length - ${ids.length}");
-  debugPrint("[MIGRATION] Local Asset Ids length - ${localAssets.length}");
-  ids.sort((a, b) => a.assetId.compareTo(b.assetId));
-  localAssets.sort((a, b) => a.assetId.compareTo(b.assetId));
-  final List<DeviceAssetEntity> toAdd = [];
-  await diffSortedLists(
-    ids,
-    localAssets,
-    compare: (a, b) => a.assetId.compareTo(b.assetId),
-    both: (deviceAsset, asset) {
-      toAdd.add(
-        DeviceAssetEntity(
-          assetId: deviceAsset.assetId,
-          hash: deviceAsset.hash!,
-          modifiedTime: asset.dateTime!,
-        ),
-      );
-      return false;
-    },
-    onlyFirst: (deviceAsset) {
-      if (kDebugMode) {
-        debugPrint(
-          '[MIGRATION] Local asset not found in DeviceAsset: ${deviceAsset.assetId}',
-        );
-      }
-    },
-    onlySecond: (asset) {
-      if (kDebugMode) {
-        debugPrint(
-          '[MIGRATION] Local asset not found in DeviceAsset: ${asset.assetId}',
-        );
-      }
-    },
-  );
-
-  if (kDebugMode) {
-    debugPrint(
-      "[MIGRATION] Total number of device assets migrated - ${toAdd.length}",
-    );
-  }
-
-  await db.writeTxn(() async {
-    await db.deviceAssetEntitys.putAll(toAdd);
-  });
+  await NetworkRepository.setHeaders(ApiService.getRequestHeaders(), serverUrls, token: accessToken);
 }
 
-class _DeviceAsset {
-  final String assetId;
-  final List<int>? hash;
-  final DateTime? dateTime;
+Future<void> _migrateTo26(Drift drift) async {
+  final migrator = _StoreMigrator(drift);
+  await migrator.migrateEnumName(StoreKey.legacyThemeMode, MetadataKey.themeMode, ThemeMode.values);
+  await migrator.migrateEnumIndex(StoreKey.legacyLogLevel, MetadataKey.logLevel, LogLevel.values);
+  await migrator.migrateEnumName(StoreKey.legacyPrimaryColor, MetadataKey.themePrimaryColor, ImmichColorPreset.values);
+  await migrator.migrateBool(StoreKey.legacyDynamicTheme, MetadataKey.themeDynamic);
+  await migrator.migrateBool(StoreKey.legacyColorfulInterface, MetadataKey.themeColorfulInterface);
+  final cleanupKeepAlbumIds = await migrator.readLegacyStoreString(StoreKey.legacyCleanupKeepAlbumIds.id);
+  if (cleanupKeepAlbumIds != null) {
+    final ids = cleanupKeepAlbumIds.split(',').where((id) => id.isNotEmpty).toList();
+    await drift.metadataEntity.insertOnConflictUpdate(
+      MetadataEntityCompanion.insert(
+        key: MetadataKey.cleanupKeepAlbumIds.key,
+        value: MetadataKey.cleanupKeepAlbumIds.encode(ids),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    await migrator.deleteLegacyStoreRows([StoreKey.legacyCleanupKeepAlbumIds.id]);
+  }
+  await migrator.migrateBool(StoreKey.legacyCleanupKeepFavorites, MetadataKey.cleanupKeepFavorites);
+  await migrator.migrateEnumIndex(
+    StoreKey.legacyCleanupKeepMediaType,
+    MetadataKey.cleanupKeepMediaType,
+    AssetKeepType.values,
+  );
+  await migrator.migrateInt(StoreKey.legacyCleanupCutoffDaysAgo, MetadataKey.cleanupCutoffDaysAgo);
+  await migrator.migrateBool(StoreKey.legacyCleanupDefaultsInitialized, MetadataKey.cleanupDefaultsInitialized);
+  await migrator.complete();
+}
 
-  const _DeviceAsset({required this.assetId, this.hash, this.dateTime});
+class _StoreMigrator {
+  final Drift _db;
+  final Map<MetadataKey<Object>, Object> _cache = {};
+  final List<int> _migratedStoreIds = [];
+
+  _StoreMigrator(this._db);
+
+  Future<void> migrateEnumIndex<T extends Enum>(StoreKey<int> legacyKey, MetadataKey<T> newKey, List<T> values) async {
+    final index = await readLegacyStoreInt(legacyKey.id);
+    if (index == null) {
+      return;
+    }
+
+    final enumValue = values.elementAtOrNull(index) ?? newKey.defaultValue;
+    _cache[newKey] = enumValue;
+    _migratedStoreIds.add(legacyKey.id);
+  }
+
+  Future<void> migrateEnumName<T extends Enum>(
+    StoreKey<String> legacyKey,
+    MetadataKey<T> newKey,
+    List<T> values,
+  ) async {
+    final name = await readLegacyStoreString(legacyKey.id);
+    if (name == null) {
+      return;
+    }
+
+    final enumValue = values.firstWhere((e) => e.name == name, orElse: () => newKey.defaultValue);
+    _cache[newKey] = enumValue;
+    _migratedStoreIds.add(legacyKey.id);
+  }
+
+  Future<void> migrateBool(StoreKey<bool> legacyKey, MetadataKey<bool> newKey) async {
+    final intValue = await readLegacyStoreInt(legacyKey.id);
+    if (intValue == null) {
+      return;
+    }
+
+    final boolValue = intValue != 0;
+    _cache[newKey] = boolValue;
+    _migratedStoreIds.add(legacyKey.id);
+  }
+
+  Future<void> migrateInt(StoreKey<int> legacyKey, MetadataKey<int> newKey) async {
+    final intValue = await readLegacyStoreInt(legacyKey.id);
+    if (intValue == null) {
+      return;
+    }
+
+    _cache[newKey] = intValue;
+    _migratedStoreIds.add(legacyKey.id);
+  }
+
+  Future<void> complete() async {
+    await _db.batch((batch) {
+      for (final entry in _cache.entries) {
+        batch.insert(
+          _db.metadataEntity,
+          MetadataEntityCompanion(key: Value(entry.key.key), value: Value(entry.key.encode(entry.value))),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    });
+    await deleteLegacyStoreRows(_migratedStoreIds);
+  }
+
+  Future<String?> readLegacyStoreString(int id) async {
+    final row = await (_db.storeEntity.select()..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row?.stringValue;
+  }
+
+  Future<int?> readLegacyStoreInt(int id) async {
+    final row = await (_db.storeEntity.select()..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row?.intValue;
+  }
+
+  Future<void> deleteLegacyStoreRows(List<int> ids) async {
+    if (ids.isEmpty) {
+      return;
+    }
+    await (_db.storeEntity.delete()..where((t) => t.id.isIn(ids))).go();
+  }
 }
