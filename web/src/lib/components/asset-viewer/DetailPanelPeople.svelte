@@ -7,7 +7,7 @@
   import { getPeopleThumbnailUrl } from '$lib/utils';
   import { type AssetResponseDto } from '@immich/sdk';
   import { IconButton, Text } from '@immich/ui';
-  import { mdiEye, mdiEyeOff, mdiPencil, mdiPlus } from '@mdi/js';
+  import { mdiEye, mdiEyeOff, mdiPencil, mdiPlus, mdiClose } from '@mdi/js';
   import { DateTime } from 'luxon';
   import { t } from 'svelte-i18n';
 
@@ -15,9 +15,10 @@
     asset: AssetResponseDto;
     isOwner: boolean;
     previousRoute: string;
+    onDeleteAllUnnamedFaces?: () => Promise<void>;
   };
 
-  const { asset, isOwner, previousRoute }: Props = $props();
+  const { asset, isOwner, previousRoute, onDeleteAllUnnamedFaces }: Props = $props();
 
   const unassignedFaces = $derived(asset.unassignedFaces || []);
   const people = $derived(asset.people || []);
@@ -70,6 +71,17 @@
             color="secondary"
             variant="ghost"
             onclick={() => assetViewerManager.toggleHiddenPeople()}
+          />
+        {/if}
+        {#if people.some((person) => !person.name || person.name.trim() === '')}
+          <IconButton
+            aria-label={$t('delete_all_unnamed_faces')}
+            icon={mdiClose}
+            size="medium"
+            shape="round"
+            color="secondary"
+            variant="ghost"
+            onclick={() => onDeleteAllUnnamedFaces && onDeleteAllUnnamedFaces()}
           />
         {/if}
         <IconButton

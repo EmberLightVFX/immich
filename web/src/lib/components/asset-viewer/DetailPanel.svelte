@@ -20,9 +20,12 @@
     AssetMediaSize,
     getAllAlbums,
     getAssetInfo,
+    deleteFace,
+    updatePerson,
     type AlbumResponseDto,
     type AssetResponseDto,
   } from '@immich/sdk';
+  import { modalManager, toastManager } from '@immich/ui';
   import { Icon, IconButton, LoadingSpinner, Text } from '@immich/ui';
   import { mdiCamera, mdiCameraIris, mdiClose, mdiImageOutline, mdiInformationOutline } from '@mdi/js';
   import { onDestroy } from 'svelte';
@@ -99,6 +102,38 @@
     assetViewerManager.closeEditFacesPanel();
   };
 
+  const deleteAllUnnamedFaces = async () => {
+    try {
+      const peopleWithNoName = asset.people?.filter((person) => !person.name || person.name.trim() === '') || [];
+
+      if (peopleWithNoName.length === 0) {
+        return;
+      }
+
+      const isConfirmed = await modalManager.showDialog({
+        prompt: $t('confirm_delete_all_unnamed_faces', { values: { count: peopleWithNoName.length } }),
+        title: $t('delete_all_unnamed_faces'),
+      });
+
+      if (!isConfirmed) {
+        return;
+      }
+
+      for (const person of peopleWithNoName) {
+        for (const face of person.faces) {
+          await deleteFace({ id: face.id, assetFaceDeleteDto: { force: false } });
+        }
+        await updatePerson({ id: person.id, personUpdateDto: { isHidden: true } });
+      }
+
+      await handleRefreshPeople();
+
+      toastManager.primary($t('all_unnamed_faces_deleted'));
+    } catch (error) {
+      handleError(error, $t('error_delete_all_unnamed_faces'));
+    }
+  };
+
   const getAssetFolderHref = (asset: AssetResponseDto) => {
     // Remove the last part of the path to get the parent path
     return Route.folders({ path: getParentPath(asset.originalPath) });
@@ -149,7 +184,7 @@
 
     <DetailPanelDescription {asset} {isOwner} />
     <DetailPanelRating {asset} {isOwner} />
-    <DetailPanelPeople {asset} {isOwner} {previousRoute} />
+    <DetailPanelPeople {asset} {isOwner} {previousRoute} onDeleteAllUnnamedFaces={deleteAllUnnamedFaces} />
 
     <div class="p-4">
       {#if asset.exifInfo}
